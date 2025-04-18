@@ -1,0 +1,296 @@
+/* Coder Light Theme - Activated by .light-theme body class */
+.light-theme {
+    background-color: #f8f8f8;
+    color: #333;
+}
+
+.light-theme .sidebar {
+    background-color: #e8e8e8;
+}
+
+.light-theme .sidebar-header {
+    border-bottom-color: #dcdcdc;
+}
+
+.light-theme .sidebar-header.logo h1 {
+    color: #333;
+}
+
+.light-theme .section-label h3 {
+    color: #666;
+}
+
+.light-theme .add-file-btn {
+    color: #666;
+    border-color: #ccc;
+}
+.light-theme .add-file-btn:hover {
+    background-color: #ddd;
+    color: #333;
+}
+
+.light-theme .file-item:hover {
+    background-color: #ddd;
+}
+.light-theme .file-item.active {
+    background-color: #ccc;
+}
+
+.light-theme .file-action {
+    color: #666;
+}
+.light-theme .file-action:hover {
+    background-color: #ddd;
+    color: #333;
+}
+
+.light-theme .top-bar, 
+.light-theme .tabs-container, 
+.light-theme .preview-container, 
+.light-theme .search-panel {
+    background-color: #e8e8e8;
+    border-bottom-color: #dcdcdc;
+}
+
+.light-theme .actions-container {
+    border-left-color: #dcdcdc;
+}
+
+.light-theme .action-btn {
+    color: #666;
+}
+.light-theme .action-btn:hover {
+    color: #333;
+}
+
+.light-theme .tab {
+    border-right-color: #dcdcdc;
+}
+.light-theme .tab.active {
+    background-color: #f8f8f8;
+    color: #333;
+}
+.light-theme .tab-close {
+    color: #888;
+}
+.light-theme .tab-close:hover {
+    background-color: #ddd;
+    color: #333;
+}
+
+/* Editor styles need careful override */
+/* .light-theme .editor { 
+    background-color: #ffffff; 
+} */ /* Handled by JS for now */
+
+/* .light-theme .line-numbers { 
+    background-color: #f0f0f0;
+    color: #aaa;
+} */ /* Handled by JS for now */
+
+.light-theme .editor pre code {
+    color: #333;
+}
+
+/* Highlight.js override for light theme */
+.light-theme .hljs {
+    /* background: transparent !important; */ /* Base bg set by JS */
+    color: #333;
+}
+.light-theme .hljs-comment, .light-theme .hljs-quote {
+    color: #998; font-style: italic;
+}
+.light-theme .hljs-keyword, .light-theme .hljs-selector-tag, .light-theme .hljs-subst {
+    color: #333; font-weight: bold;
+}
+.light-theme .hljs-number, .light-theme .hljs-literal, .light-theme .hljs-variable, .light-theme .hljs-template-variable, .light-theme .hljs-tag .hljs-attr {
+    color: #008080;
+}
+.light-theme .hljs-string, .light-theme .hljs-doctag {
+    color: #d14;
+}
+.light-theme .hljs-title, .light-theme .hljs-section, .light-theme .hljs-selector-id {
+    color: #900; font-weight: bold;
+}
+.light-theme .hljs-subst {
+    font-weight: normal;
+}
+.light-theme .hljs-type, .light-theme .hljs-class .hljs-title {
+    color: #458; font-weight: bold;
+}
+.light-theme .hljs-tag, .light-theme .hljs-name, .light-theme .hljs-attribute {
+    color: #000080; font-weight: normal;
+}
+.light-theme .hljs-regexp, .light-theme .hljs-link {
+    color: #009926;
+}
+.light-theme .hljs-symbol, .light-theme .hljs-bullet {
+    color: #990073;
+}
+.light-theme .hljs-built_in, .light-theme .hljs-builtin-name {
+    color: #0086b3;
+}
+.light-theme .hljs-meta {
+    color: #999; font-weight: bold;
+}
+.light-theme .hljs-deletion {
+    background: #fdd;
+}
+.light-theme .hljs-addition {
+    background: #dfd;
+}
+.light-theme .hljs-emphasis {
+    font-style: italic;
+}
+.light-theme .hljs-strong {
+    font-weight: bold;
+}
+
+.light-theme .ai-sidebar {
+    background-color: #e8e8e8;
+}
+
+.light-theme .ai-message {
+    background-color: #ddd;
+}
+.light-theme .ai-message.user-message {
+    background-color: #cce5ff;
+}
+
+.light-theme .ai-input {
+    background-color: #fff;
+    color: #333;
+    border-color: #ccc;
+}
+
+.light-theme .send-button {
+    background-color: #007acc;
+}
+.light-theme .send-button:hover {
+    background-color: #005fa3;
+}
+
+.light-theme .search-input, .light-theme .replace-input {
+    background-color: #fff;
+    color: #333;
+    border-color: #ccc;
+}
+
+.light-theme .search-buttons button {
+    background-color: #ddd;
+    color: #333;
+    border-color: #ccc;
+}
+.light-theme .search-buttons button:hover {
+    background-color: #ccc;
+}
+
+.light-theme .search-next, .light-theme .search-prev {
+    background-color: #cce5ff !important;
+}
+.light-theme .search-replace, .light-theme .search-replace-all {
+    background-color: #d1e7ff !important;
+}
+.light-theme .close-search {
+    background-color: #ddd !important;
+}
+
+.light-theme .terminal-panel {
+    background-color: #eee;
+    border-top-color: #ccc;
+}
+
+.light-theme .terminal-header {
+    background-color: #ddd;
+    border-bottom-color: #ccc;
+}
+
+.light-theme .terminal-header h3 {
+    color: #333;
+}
+
+.light-theme .terminal-actions button {
+    color: #666;
+}
+.light-theme .terminal-actions button:hover {
+    color: #333;
+}
+
+.light-theme .terminal-content {
+    color: #333;
+}
+
+.light-theme .terminal-prompt {
+    color: #007acc;
+}
+
+.light-theme .terminal-input {
+    color: #333;
+}
+
+.light-theme .terminal-line.command {
+    color: #007acc;
+}
+.light-theme .terminal-line.error {
+    color: #dc3545;
+}
+
+.light-theme .status-bar {
+    background-color: #0069b3;
+}
+
+.light-theme .settings-panel {
+    background-color: #e8e8e8;
+    border-left-color: #dcdcdc;
+    border-bottom-color: #dcdcdc;
+}
+
+.light-theme .settings-header {
+    border-bottom-color: #dcdcdc;
+}
+
+.light-theme .close-settings {
+    color: #666;
+}
+.light-theme .close-settings:hover {
+    color: #333;
+}
+
+.light-theme .settings-group h4 {
+    color: #555;
+}
+
+.light-theme .settings-group select {
+    background-color: #fff;
+    color: #333;
+    border-color: #ccc;
+}
+
+.light-theme .shortcuts-panel {
+    background-color: #e8e8e8;
+}
+
+.light-theme .shortcuts-header {
+    border-bottom-color: #dcdcdc;
+}
+
+.light-theme .close-shortcuts {
+    color: #666;
+}
+.light-theme .close-shortcuts:hover {
+    color: #333;
+}
+
+.light-theme .shortcut-group h4 {
+    color: #555;
+    border-bottom-color: #dcdcdc;
+}
+
+.light-theme .shortcut-keys {
+    background-color: #ddd;
+    color: #333;
+}
+
+.light-theme .shortcut-desc {
+    color: #555;
+} 

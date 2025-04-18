@@ -1,0 +1,305 @@
+:root {
+    --primary-color: #000000; /* Black */
+    --secondary-color: #FFFFFF; /* White */
+    --accent-color: #4a90e2; /* A subtle accent color (optional) */
+    --background-color: #f8f9fa; /* Slightly off-white background */
+    --text-color: #333333; /* Darker gray for text */
+    --border-color: #dee2e6; /* Lighter border color */
+    --border-radius: 4px;
+    --font-family: 'Poppins', sans-serif;
+    --sidebar-width: 320px;
+    --header-height: 60px;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px; /* Base font size */
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+h1, h2, h3 {
+    font-weight: 600;
+    margin-bottom: 1rem; /* Consistent bottom margin */
+    line-height: 1.3;
+}
+
+h1 {
+  font-size: 1.5rem;
+}
+
+h2 {
+  font-size: 1.25rem;
+}
+
+h3 {
+  font-size: 1.1rem;
+}
+
+a {
+    color: var(--accent-color);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: darken(var(--accent-color), 10%);
+}
+
+.app-header {
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    padding: 0 1.5rem;
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    position: fixed; /* Keep header fixed */
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.app-header h1 {
+    margin: 0;
+    font-size: 1.2rem; /* Slightly smaller header title */
+    font-weight: 500;
+}
+
+.app-main {
+    flex-grow: 1;
+    display: flex; /* Change to flex */
+    padding-top: var(--header-height); /* Account for fixed header */
+    /* Remove grid layout for now, use flex */
+}
+
+.input-section {
+    width: var(--sidebar-width);
+    height: calc(100vh - var(--header-height)); /* Full height sidebar */
+    overflow-y: auto; /* Scroll if content overflows */
+    border-right: 1px solid var(--border-color);
+    padding: 1.5rem;
+    background-color: var(--secondary-color);
+    transition: width 0.3s ease; /* For potential collapse later */
+    flex-shrink: 0; /* Prevent sidebar from shrinking */
+}
+
+.editor-section {
+    flex-grow: 1; /* Take remaining space */
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - var(--header-height)); /* Full height editor */
+    /* overflow-y: auto; */ /* Remove overflow from editor section */
+    /* Let canvas-container handle overflow */
+    background-color: var(--background-color); /* Add background color here */
+}
+
+.editor-section > h2 {
+    flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.canvas-container {
+    flex-grow: 1; /* Allow container to fill space */
+    display: flex; /* Keep flex for centering */
+    justify-content: center;
+    align-items: center;
+    background-image: linear-gradient(45deg, #efefef 25%, transparent 25%), linear-gradient(-45deg, #efefef 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #efefef 75%), linear-gradient(-45deg, transparent 75%, #efefef 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px; /* Subtle checkerboard */
+    border-radius: var(--border-radius);
+    margin-bottom: 1.5rem;
+    overflow: auto; /* IMPORTANT: Enable scrolling/panning */
+    position: relative;
+    border: 1px solid var(--border-color); /* Use solid border */
+    min-height: 400px; /* Ensure enough height */
+    width: 100%; /* Take full width of editor section */
+    padding: 2rem; /* Add padding for better visuals */
+}
+
+/* New styles for the graphic output scaling with smoother animations */
+#graphic-output {
+    /* Base styling */
+    box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease, width 0.3s ease, height 0.3s ease;
+    transform-origin: center center;
+    max-width: 100%;
+    max-height: 100%;
+    /* Allow auto scaling to fit container */
+    transform: scale(var(--scale, 1));
+    background-color: #FFFFFF; /* Default white background */
+    position: relative;
+    min-width: 100px;
+    min-height: 100px;
+}
+
+/* Zoom controls for canvas */
+.canvas-controls {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    background: var(--secondary-color);
+    border-radius: 20px;
+    padding: 0.5rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 100;
+}
+
+.canvas-controls button {
+    border: none;
+    background: transparent;
+    width: 32px;
+    height: 32px;
+    margin: 0 0.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+    color: #555;
+    padding: 0;
+}
+
+.canvas-controls button .material-icons {
+    font-size: 20px;
+}
+
+.canvas-controls button:hover {
+    background-color: #f1f1f1;
+}
+
+.canvas-controls .zoom-value {
+    display: flex;
+    align-items: center;
+    padding: 0 0.5rem;
+    font-size: 0.9rem;
+    color: #555;
+    min-width: 50px;
+    justify-content: center;
+}
+
+.graphic-output-placeholder {
+    color: #aaa;
+    text-align: center;
+    padding: 2rem;
+    max-width: 400px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Loading state */
+#graphic-output.loading {
+    min-width: 300px;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255,255,255,0.8);
+}
+
+/* Canvas size display (like in Canva) */
+.canvas-size-display {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 0.85rem;
+    color: #444;
+    background: rgba(255,255,255,0.95);
+    padding: 0.4rem 0.6rem;
+    border-radius: 3px;
+    z-index: 50;
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.controls-panel {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    background-color: var(--secondary-color);
+    min-height: 80px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.app-footer {
+   display: none; /* Remove footer for a cleaner look like Canva */
+}
+
+/* --- Responsive Adjustments --- */
+
+/* Tablet and Smaller Desktop */
+@media (max-width: 1200px) {
+    :root {
+        --sidebar-width: 280px;
+    }
+    .input-section, .editor-section {
+        padding: 1rem;
+    }
+}
+
+/* Tablet Portrait */
+@media (max-width: 992px) {
+     :root {
+        --sidebar-width: 250px;
+    }
+}
+
+/* Mobile Landscape and Portrait */
+@media (max-width: 768px) {
+    .app-main {
+        flex-direction: column; /* Stack sections */
+        padding-top: var(--header-height); /* Already set, but ensure it applies */
+    }
+
+    .input-section {
+        width: 100%; /* Full width */
+        height: auto; /* Auto height */
+        max-height: 50vh; /* Limit height, allow scroll */
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        overflow-y: auto;
+    }
+
+    .editor-section {
+        height: auto; /* Auto height */
+        flex-grow: 1; /* Allow editor to take remaining space */
+    }
+
+    .canvas-container {
+         min-height: 250px;
+    }
+}
+
+/* Small Mobile */
+@media (max-width: 576px) {
+    :root {
+        --header-height: 50px;
+    }
+     html {
+        font-size: 14px; /* Smaller base font on small devices */
+    }
+    .app-header h1 {
+        font-size: 1rem;
+    }
+     .input-section, .editor-section, .controls-panel {
+        padding: 0.75rem;
+    }
+} 
