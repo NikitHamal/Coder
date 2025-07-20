@@ -116,7 +116,7 @@ public class CodeEditorFragment extends Fragment implements TabAdapter.TabAction
 
         List<TabItem> openTabs = listener.getOpenTabsList();
         // Pass 'this' as TabActionListener so TabAdapter can call back to this fragment
-        tabAdapter = new TabAdapter(getContext(), openTabs, this); // 'this' refers to CodeEditorFragment
+        tabAdapter = new TabAdapter(getContext(), openTabs, this, listener.getFileManager()); // 'this' refers to CodeEditorFragment
 
         fileViewPager.setAdapter(tabAdapter);
 

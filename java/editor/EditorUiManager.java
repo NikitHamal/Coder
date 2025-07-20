@@ -23,7 +23,7 @@ import com.codex.apk.SettingsActivity;
 import com.codex.apk.TabItem;
 import com.codex.apk.DialogHelper; // Added import for DialogHelper
 import com.codex.apk.editor.adapters.MainPagerAdapter;
-import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -46,7 +46,7 @@ public class EditorUiManager {
     private MaterialToolbar toolbar;
     private TabLayout mainTabLayout;
     private ViewPager2 mainViewPager;
-    private ExtendedFloatingActionButton fabRun;
+    private FloatingActionButton fabRun;
     private LinearLayout drawerContentLayout;
 
     public EditorUiManager(EditorActivity activity, File projectDir, FileManager fileManager, DialogHelper dialogHelper, ExecutorService executorService, List<TabItem> openTabs) {
@@ -62,14 +62,21 @@ public class EditorUiManager {
      * Initializes the main UI components from the layout.
      */
     public void initializeViews() {
-        // drawerLayout = null; // No drawer layout in new design
-        toolbar = activity.findViewById(R.id.toolbar);
-        mainTabLayout = activity.findViewById(R.id.tab_layout);
-        mainViewPager = activity.findViewById(R.id.view_pager);
-        fabRun = activity.findViewById(R.id.fab_run_code);
-        // drawerContentLayout = null; // No drawer content layout in new design
+        try {
+            // drawerLayout = null; // No drawer layout in new design
+            toolbar = activity.findViewById(R.id.toolbar);
+            mainTabLayout = activity.findViewById(R.id.tab_layout);
+            mainViewPager = activity.findViewById(R.id.view_pager);
+            fabRun = activity.findViewById(R.id.fab_run_code);
+            // drawerContentLayout = null; // No drawer content layout in new design
 
-        fabRun.setVisibility(View.GONE);
+            if (fabRun != null) {
+                fabRun.setVisibility(View.GONE);
+            }
+        } catch (Exception e) {
+            Log.e("EditorUiManager", "Error initializing views: " + e.getMessage(), e);
+            Toast.makeText(activity, "Error initializing UI components", Toast.LENGTH_SHORT).show();
+        }
     }
 
     /**

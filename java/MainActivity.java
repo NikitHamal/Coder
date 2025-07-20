@@ -85,8 +85,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Set the theme to AppTheme for overall light mode
-        setTheme(R.style.AppTheme);
+        		// Set up theme based on user preferences
+		ThemeManager.setupTheme(this);
+		setTheme(R.style.AppTheme);
         setContentView(R.layout.main);
 
         // Initialize views

@@ -28,17 +28,27 @@ public class SettingsActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.settings);
 		
-		// Initialize toolbar
-		toolbar = findViewById(R.id.toolbar);
-		setSupportActionBar(toolbar);
-		getSupportActionBar().setTitle("Settings");
-		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-		
-		// Settings UI is directly in the layout, no fragment needed
-		// Initialize settings controls
-		initializeSettings();
+		try {
+			setContentView(R.layout.settings);
+			
+			// Initialize toolbar
+			toolbar = findViewById(R.id.toolbar);
+			if (toolbar != null) {
+				setSupportActionBar(toolbar);
+				if (getSupportActionBar() != null) {
+					getSupportActionBar().setTitle("Settings");
+					getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+				}
+			}
+			
+			// Settings UI is directly in the layout, no fragment needed
+			// Initialize settings controls
+			initializeSettings();
+		} catch (Exception e) {
+			Toast.makeText(this, "Error loading settings: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+			finish();
+		}
 	}
 	
 	@Override
@@ -137,11 +147,13 @@ public class SettingsActivity extends AppCompatActivity {
 			ListPreference themePreference = findPreference("app_theme");
 			if (themePreference != null) {
 				themePreference.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
-				themePreference.setOnPreferenceChangeListener((preference, newValue) -> {
-					String theme = (String) newValue;
-					Toast.makeText(getContext(), "Theme will be applied when you restart the app", Toast.LENGTH_SHORT).show();
-					return true;
-				});
+							themePreference.setOnPreferenceChangeListener((preference, newValue) -> {
+				String theme = (String) newValue;
+				if (getActivity() != null) {
+					ThemeManager.switchTheme(getActivity(), theme);
+				}
+				return true;
+			});
 			}
 			
 			// Font size preference

@@ -2,6 +2,8 @@ package com.codex.apk;
 
 import android.content.Context;
 import android.graphics.Typeface;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -29,10 +31,16 @@ public class TabAdapter extends RecyclerView.Adapter<TabAdapter.ViewHolder> {
 	private final Context context;
 	private final List<TabItem> openTabs;
 	private final TabActionListener tabActionListener;
+	private final FileManager fileManager;
 
 	// Cache for editor views to improve performance and maintain state
 	private final Map<String, CodeEditorView> editorViewCache = new HashMap<>();
 	private final Map<String, OptimizedSyntaxHighlighter> highlighterCache = new HashMap<>();
+	
+	// Auto-save functionality
+	private final Handler autoSaveHandler = new Handler(Looper.getMainLooper());
+	private final Map<String, Runnable> autoSaveRunnables = new HashMap<>();
+	private static final int AUTO_SAVE_DELAY = 2000; // 2 seconds delay
 
 	// Current active tab position
 	private int activeTabPosition = 0;
@@ -51,11 +59,13 @@ public class TabAdapter extends RecyclerView.Adapter<TabAdapter.ViewHolder> {
 	 * @param context The context.
 	 * @param openTabs The list of open TabItem objects.
 	 * @param tabActionListener The listener for tab-related actions.
+	 * @param fileManager The file manager for auto-save functionality.
 	 */
-	public TabAdapter(Context context, List<TabItem> openTabs, TabActionListener tabActionListener) {
+	public TabAdapter(Context context, List<TabItem> openTabs, TabActionListener tabActionListener, FileManager fileManager) {
 		this.context = context;
 		this.openTabs = openTabs;
 		this.tabActionListener = tabActionListener;
+		this.fileManager = fileManager;
 	}
 
 	@NonNull
@@ -152,6 +162,9 @@ public class TabAdapter extends RecyclerView.Adapter<TabAdapter.ViewHolder> {
 							tabActionListener.onActiveTabContentChanged(text, tabItem.getFileName());
 						}
 					}
+					
+					// Auto-save functionality
+					scheduleAutoSave(tabItem, text);
 				}
 			});
 		}
@@ -204,10 +217,55 @@ public class TabAdapter extends RecyclerView.Adapter<TabAdapter.ViewHolder> {
 	}
 
 	/**
+	 * Schedules auto-save for a tab item with debouncing to avoid excessive I/O operations.
+	 * @param tabItem The tab item to auto-save.
+	 * @param content The current content to save.
+	 */
+	private void scheduleAutoSave(TabItem tabItem, String content) {
+		if (fileManager == null || !SettingsActivity.isAutoSaveEnabled(context)) {
+			return;
+		}
+		
+		String filePath = tabItem.getFile().getAbsolutePath();
+		
+		// Cancel any existing auto-save for this file
+		Runnable existingRunnable = autoSaveRunnables.get(filePath);
+		if (existingRunnable != null) {
+			autoSaveHandler.removeCallbacks(existingRunnable);
+		}
+		
+		// Create new auto-save runnable
+		Runnable autoSaveRunnable = () -> {
+			try {
+				fileManager.writeFileContent(tabItem.getFile(), content);
+				tabItem.setModified(false);
+				if (tabActionListener != null) {
+					tabActionListener.onTabModifiedStateChanged();
+				}
+				Log.d(TAG, "Auto-saved: " + tabItem.getFileName());
+			} catch (Exception e) {
+				Log.e(TAG, "Auto-save failed for " + tabItem.getFileName(), e);
+			} finally {
+				autoSaveRunnables.remove(filePath);
+			}
+		};
+		
+		// Schedule the auto-save
+		autoSaveRunnables.put(filePath, autoSaveRunnable);
+		autoSaveHandler.postDelayed(autoSaveRunnable, AUTO_SAVE_DELAY);
+	}
+
+	/**
 	 * Cleans up resources held by the adapter, such as cached editor views and highlighters.
 	 * This should be called when the adapter is no longer needed to prevent memory leaks.
 	 */
 	public void destroy() {
+		// Cancel all pending auto-saves
+		for (Runnable runnable : autoSaveRunnables.values()) {
+			autoSaveHandler.removeCallbacks(runnable);
+		}
+		autoSaveRunnables.clear();
+		
 		for (OptimizedSyntaxHighlighter highlighter : highlighterCache.values()) {
 			highlighter.destroy();
 		}
