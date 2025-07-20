@@ -113,6 +113,23 @@ public class MainActivity extends AppCompatActivity {
         // Set up click listeners for new buttons
         buttonNewProject.setOnClickListener(v -> showNewProjectDialog());
         buttonImportProject.setOnClickListener(v -> importProject());
+        
+        // Additional button listeners
+        MaterialButton buttonRefreshProjects = findViewById(R.id.button_refresh_projects);
+        if (buttonRefreshProjects != null) {
+            buttonRefreshProjects.setOnClickListener(v -> refreshProjectsList());
+        }
+        
+        MaterialButton buttonCreateFirstProject = findViewById(R.id.button_create_first_project);
+        if (buttonCreateFirstProject != null) {
+            buttonCreateFirstProject.setOnClickListener(v -> showNewProjectDialog());
+        }
+        
+        // Extended FAB click listener
+        com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton fabQuickActions = findViewById(R.id.fab_quick_actions);
+        if (fabQuickActions != null) {
+            fabQuickActions.setOnClickListener(v -> showQuickActionsMenu());
+        }
 
         listViewProjects.setOnItemClickListener((parent, view, position, id) -> {
             HashMap<String, Object> project = projectsList.get(position);
@@ -798,5 +815,43 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return result;
+    }
+    
+    /**
+     * Refresh the projects list with animation
+     */
+    private void refreshProjectsList() {
+        loadProjectsList();
+        updateEmptyStateVisibility();
+        Toast.makeText(this, "Projects refreshed", Toast.LENGTH_SHORT).show();
+    }
+    
+    /**
+     * Show quick actions menu with modern options
+     */
+    private void showQuickActionsMenu() {
+        com.google.android.material.bottomsheet.BottomSheetDialog bottomSheet = 
+            new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        
+        View view = getLayoutInflater().inflate(R.layout.bottom_sheet_quick_actions, null);
+        
+        // Quick action buttons
+        view.findViewById(R.id.action_new_project).setOnClickListener(v -> {
+            bottomSheet.dismiss();
+            showNewProjectDialog();
+        });
+        
+        view.findViewById(R.id.action_import_project).setOnClickListener(v -> {
+            bottomSheet.dismiss();
+            importProject();
+        });
+        
+        view.findViewById(R.id.action_open_settings).setOnClickListener(v -> {
+            bottomSheet.dismiss();
+            startActivity(new Intent(this, SettingsActivity.class));
+        });
+        
+        bottomSheet.setContentView(view);
+        bottomSheet.show();
     }
 }

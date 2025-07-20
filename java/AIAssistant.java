@@ -34,7 +34,27 @@ import okhttp3.Response;
 
 public class AIAssistant implements FileChangeListener { // Implement FileChangeListener
 	public enum AIModel {
-		GEMINI_2_FLASH("gemini-2.0-flash", "Gemini 2.0 Flash"),
+		// Latest Gemini 2.x Models
+		GEMINI_2_5_FLASH("gemini-2.5-flash", "Gemini 2.5 Flash"),
+		GEMINI_2_5_FLASH_LITE("gemini-2.5-flash-lite", "Gemini 2.5 Flash Lite"),
+		GEMINI_2_5_PRO("gemini-2.5-pro", "Gemini 2.5 Pro"),
+		GEMINI_2_0_FLASH("gemini-2.0-flash", "Gemini 2.0 Flash"),
+		GEMINI_2_0_FLASH_EXP("gemini-2.0-flash-exp", "Gemini 2.0 Flash Experimental"),
+		GEMINI_2_0_FLASH_LITE("gemini-2.0-flash-lite", "Gemini 2.0 Flash Lite"),
+		GEMINI_2_0_FLASH_THINKING("gemini-2.0-flash-thinking", "Gemini 2.0 Flash Thinking"),
+		
+		// Gemini 1.5 Models
+		GEMINI_1_5_FLASH("gemini-1.5-flash", "Gemini 1.5 Flash"),
+		GEMINI_1_5_FLASH_8B("gemini-1.5-flash-8b", "Gemini 1.5 Flash 8B"),
+		GEMINI_1_5_FLASH_002("gemini-1.5-flash-002", "Gemini 1.5 Flash 002"),
+		GEMINI_1_5_PRO("gemini-1.5-pro", "Gemini 1.5 Pro"),
+		GEMINI_1_5_PRO_002("gemini-1.5-pro-002", "Gemini 1.5 Pro 002"),
+		
+		// Gemini 1.0 Models
+		GEMINI_1_0_PRO("gemini-1.0-pro", "Gemini 1.0 Pro"),
+		GEMINI_1_0_PRO_VISION("gemini-1.0-pro-vision", "Gemini 1.0 Pro Vision"),
+		
+		// DeepSeek Models for comparison
 		DEEPSEEK_R1("deepseek-ai/DeepSeek-R1-Distill-Qwen-32B", "Deepseek R1");
 
 		private final String modelId;
@@ -78,10 +98,92 @@ public class AIAssistant implements FileChangeListener { // Implement FileChange
 			}
 			return null;
 		}
+		
+		/**
+		 * Get model capabilities and features description
+		 * @return String describing the model's key capabilities
+		 */
+		public String getCapabilities() {
+			switch (this) {
+				case GEMINI_2_5_FLASH:
+					return "Latest & fastest • Thinking mode • Code execution • 1M context";
+				case GEMINI_2_5_FLASH_LITE:
+					return "Ultra-fast • Lightweight • Optimized for speed";
+				case GEMINI_2_5_PRO:
+					return "Most capable • Advanced reasoning • Multimodal excellence";
+				case GEMINI_2_0_FLASH:
+					return "Fast & efficient • Multimodal • Function calling";
+				case GEMINI_2_0_FLASH_EXP:
+					return "Experimental features • Latest improvements • Beta access";
+				case GEMINI_2_0_FLASH_LITE:
+					return "Lightweight • Fast responses • Mobile optimized";
+				case GEMINI_2_0_FLASH_THINKING:
+					return "Chain-of-thought • Reasoning transparency • Problem solving";
+				case GEMINI_1_5_FLASH:
+					return "Balanced • Reliable • Production ready";
+				case GEMINI_1_5_FLASH_8B:
+					return "Compact • Efficient • Lower resource usage";
+				case GEMINI_1_5_FLASH_002:
+					return "Enhanced version • Improved accuracy • Stable";
+				case GEMINI_1_5_PRO:
+					return "Professional • Complex tasks • High accuracy";
+				case GEMINI_1_5_PRO_002:
+					return "Enhanced Pro • Better performance • Latest fixes";
+				case GEMINI_1_0_PRO:
+					return "Stable • Text generation • Code assistance";
+				case GEMINI_1_0_PRO_VISION:
+					return "Vision capabilities • Image understanding • Multimodal";
+				case DEEPSEEK_R1:
+					return "Reasoning focused • Mathematical • Alternative choice";
+				default:
+					return "Advanced AI capabilities";
+			}
+		}
+		
+		/**
+		 * Check if model supports vision/image understanding
+		 * @return true if model supports vision
+		 */
+		public boolean supportsVision() {
+			switch (this) {
+				case GEMINI_2_5_FLASH:
+				case GEMINI_2_5_PRO:
+				case GEMINI_2_0_FLASH:
+				case GEMINI_2_0_FLASH_EXP:
+				case GEMINI_1_5_FLASH:
+				case GEMINI_1_5_FLASH_002:
+				case GEMINI_1_5_PRO:
+				case GEMINI_1_5_PRO_002:
+				case GEMINI_1_0_PRO_VISION:
+					return true;
+				default:
+					return false;
+			}
+		}
+		
+		/**
+		 * Check if model supports function calling
+		 * @return true if model supports function calling
+		 */
+		public boolean supportsFunctionCalling() {
+			switch (this) {
+				case GEMINI_2_5_FLASH:
+				case GEMINI_2_5_PRO:
+				case GEMINI_2_0_FLASH:
+				case GEMINI_2_0_FLASH_EXP:
+				case GEMINI_1_5_FLASH:
+				case GEMINI_1_5_FLASH_002:
+				case GEMINI_1_5_PRO:
+				case GEMINI_1_5_PRO_002:
+					return true;
+				default:
+					return false;
+			}
+		}
 	}
 
 
-	private AIModel currentModel = AIModel.GEMINI_2_FLASH;
+	private AIModel currentModel = AIModel.GEMINI_2_5_FLASH;
 	private String apiKey;
 
 	private static final String TAG = "AIAssistant";
@@ -212,7 +314,20 @@ public class AIAssistant implements FileChangeListener { // Implement FileChange
 
 	private String getApiUrl() {
 		switch (currentModel) {
-			case GEMINI_2_FLASH:
+			case GEMINI_2_5_FLASH:
+			case GEMINI_2_5_FLASH_LITE:
+			case GEMINI_2_5_PRO:
+			case GEMINI_2_0_FLASH:
+			case GEMINI_2_0_FLASH_EXP:
+			case GEMINI_2_0_FLASH_LITE:
+			case GEMINI_2_0_FLASH_THINKING:
+			case GEMINI_1_5_FLASH:
+			case GEMINI_1_5_FLASH_8B:
+			case GEMINI_1_5_FLASH_002:
+			case GEMINI_1_5_PRO:
+			case GEMINI_1_5_PRO_002:
+			case GEMINI_1_0_PRO:
+			case GEMINI_1_0_PRO_VISION:
 				return "https://generativelanguage.googleapis.com/v1beta/models/" +
 						currentModel.getModelId() + ":generateContent?key=" + apiKey;
 			case DEEPSEEK_R1:
@@ -227,7 +342,7 @@ public class AIAssistant implements FileChangeListener { // Implement FileChange
 		this.currentFileNameForPromptContext = currentFileName;
 		this.currentFileContentForPromptContext = currentFileContent;
 
-		if ((currentModel == AIModel.GEMINI_2_FLASH || currentModel == AIModel.DEEPSEEK_R1) &&
+		if ((currentModel == AIModel.GEMINI_2_5_FLASH || currentModel == AIModel.GEMINI_2_5_FLASH_LITE || currentModel == AIModel.GEMINI_2_5_PRO || currentModel == AIModel.GEMINI_2_0_FLASH || currentModel == AIModel.GEMINI_2_0_FLASH_EXP || currentModel == AIModel.GEMINI_2_0_FLASH_LITE || currentModel == AIModel.GEMINI_2_0_FLASH_THINKING || currentModel == AIModel.GEMINI_1_5_FLASH || currentModel == AIModel.GEMINI_1_5_FLASH_8B || currentModel == AIModel.GEMINI_1_5_FLASH_002 || currentModel == AIModel.GEMINI_1_5_PRO || currentModel == AIModel.GEMINI_1_5_PRO_002 || currentModel == AIModel.GEMINI_1_0_PRO || currentModel == AIModel.GEMINI_1_0_PRO_VISION || currentModel == AIModel.DEEPSEEK_R1) &&
 				(apiKey == null || apiKey.isEmpty())) {
 			String errorMsg = currentModel.getDisplayName() + " API key/token not configured";
 			if (listener != null) listener.onAiError(errorMsg);
@@ -246,7 +361,20 @@ public class AIAssistant implements FileChangeListener { // Implement FileChange
 
 				JsonObject requestBody;
 				switch (currentModel) {
-					case GEMINI_2_FLASH:
+					case GEMINI_2_5_FLASH:
+					case GEMINI_2_5_FLASH_LITE:
+					case GEMINI_2_5_PRO:
+					case GEMINI_2_0_FLASH:
+					case GEMINI_2_0_FLASH_EXP:
+					case GEMINI_2_0_FLASH_LITE:
+					case GEMINI_2_0_FLASH_THINKING:
+					case GEMINI_1_5_FLASH:
+					case GEMINI_1_5_FLASH_8B:
+					case GEMINI_1_5_FLASH_002:
+					case GEMINI_1_5_PRO:
+					case GEMINI_1_5_PRO_002:
+					case GEMINI_1_0_PRO:
+					case GEMINI_1_0_PRO_VISION:
 						requestBody = buildGeminiRequestBody(contextPrompt);
 						break;
 					case DEEPSEEK_R1:
@@ -309,7 +437,20 @@ public class AIAssistant implements FileChangeListener { // Implement FileChange
 			String aiJsonResponseText;
 
 			switch (currentModel) {
-				case GEMINI_2_FLASH:
+				case GEMINI_2_5_FLASH:
+				case GEMINI_2_5_FLASH_LITE:
+				case GEMINI_2_5_PRO:
+				case GEMINI_2_0_FLASH:
+				case GEMINI_2_0_FLASH_EXP:
+				case GEMINI_2_0_FLASH_LITE:
+				case GEMINI_2_0_FLASH_THINKING:
+				case GEMINI_1_5_FLASH:
+				case GEMINI_1_5_FLASH_8B:
+				case GEMINI_1_5_FLASH_002:
+				case GEMINI_1_5_PRO:
+				case GEMINI_1_5_PRO_002:
+				case GEMINI_1_0_PRO:
+				case GEMINI_1_0_PRO_VISION:
 					aiJsonResponseText = geminiParser.parseGeminiResponse(responseBodyString);
 					break;
 				case DEEPSEEK_R1:

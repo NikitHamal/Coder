@@ -1,35 +1,159 @@
-<LinearLayout
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:app="http://schemas.android.com/apk/res-auto"
-	xmlns:tools="http://schemas.android.com/tools"
-	android:layout_width="match_parent"
-	android:layout_height="wrap_content"
-	android:orientation="horizontal"
-	android:paddingStart="16dp"
-	android:paddingEnd="16dp"
-	android:paddingTop="12dp"
-	android:paddingBottom="12dp"
-    android:paddingRight="12dp"
-    android:paddingLeft="12dp"
-	android:gravity="center_vertical"
-	android:background="?attr/selectableItemBackground">
-	<TextView
-		android:id="@+id/text_model_name"
-		android:focusable="false"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content"
-		android:text="Model Name"
-		android:textSize="14sp"
-		android:textColor="@color/on_surface"
-		android:layout_weight="1" />
-	<ImageView
-		android:id="@+id/image_checkmark"
-		android:focusable="false"
-		android:layout_width="20dp"
-		android:layout_height="20dp"
-		android:src="@drawable/ic_checkmark"
-		android:scaleType="fitXY"
-		android:contentDescription="Selected"
-		android:tint="@color/primary"
-		android:visibility="gone" />
-</LinearLayout>
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="8dp"
+    android:layout_marginVertical="4dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/outline_variant"
+    app:strokeWidth="1dp"
+    app:cardBackgroundColor="@color/surface_container_low"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Main Content Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Model Icon -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                app:cardBackgroundColor="@color/primary_container">
+
+                <ImageView
+                    android:id="@+id/image_model_icon"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/icon_smart_toy_round"
+                    app:tint="@color/on_primary_container" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Model Info -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="8dp">
+
+                <!-- Model Name -->
+                <TextView
+                    android:id="@+id/text_model_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Gemini 2.5 Flash"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                    android:textColor="@color/on_surface"
+                    android:textStyle="bold"
+                    android:ellipsize="end"
+                    android:maxLines="1" />
+
+                <!-- Model Capabilities -->
+                <TextView
+                    android:id="@+id/text_model_capabilities"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Latest & fastest • Thinking mode • Code execution"
+                    android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                    android:textColor="@color/on_surface_variant"
+                    android:layout_marginTop="2dp"
+                    android:ellipsize="end"
+                    android:maxLines="1" />
+
+            </LinearLayout>
+
+            <!-- Selection Indicator -->
+            <ImageView
+                android:id="@+id/image_checkmark"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/icon_check_circle_round"
+                app:tint="@color/primary"
+                android:visibility="gone"
+                android:contentDescription="Selected" />
+
+        </LinearLayout>
+
+        <!-- Feature Badges -->
+        <LinearLayout
+            android:id="@+id/layout_feature_badges"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp"
+            android:visibility="gone">
+
+            <!-- Vision Badge -->
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_vision"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Vision"
+                android:textSize="10sp"
+                app:chipIcon="@drawable/icon_visibility_round"
+                app:chipIconSize="14dp"
+                app:chipCornerRadius="8dp"
+                app:chipMinHeight="24dp"
+                app:chipBackgroundColor="@color/secondary_container"
+                app:chipStrokeWidth="0dp"
+                android:layout_marginEnd="6dp"
+                android:visibility="gone"
+                style="@style/Widget.Material3.Chip.Assist" />
+
+            <!-- Function Calling Badge -->
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_function_calling"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Functions"
+                android:textSize="10sp"
+                app:chipIcon="@drawable/icon_functions_round"
+                app:chipIconSize="14dp"
+                app:chipCornerRadius="8dp"
+                app:chipMinHeight="24dp"
+                app:chipBackgroundColor="@color/tertiary_container"
+                app:chipStrokeWidth="0dp"
+                android:layout_marginEnd="6dp"
+                android:visibility="gone"
+                style="@style/Widget.Material3.Chip.Assist" />
+
+            <!-- Latest Badge -->
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_latest"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Latest"
+                android:textSize="10sp"
+                app:chipIcon="@drawable/icon_new_releases_round"
+                app:chipIconSize="14dp"
+                app:chipCornerRadius="8dp"
+                app:chipMinHeight="24dp"
+                app:chipBackgroundColor="@color/success_container"
+                app:chipStrokeWidth="0dp"
+                android:visibility="gone"
+                style="@style/Widget.Material3.Chip.Assist" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

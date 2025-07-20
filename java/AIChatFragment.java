@@ -133,7 +133,7 @@ public class AIChatFragment extends Fragment implements ModelSelectorBottomSheet
 
         // Initialize UI components
         recyclerViewChatHistory = view.findViewById(R.id.recycler_view_chat_history);
-        editTextAiPrompt = view.findViewById(R.id.edittext_ai_prompt);
+        editTextAiPrompt = view.findViewById(R.id.edit_text_ai_prompt);
         buttonAiSend = view.findViewById(R.id.button_ai_send);
 
         // Empty state UI elements
