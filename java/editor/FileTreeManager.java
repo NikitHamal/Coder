@@ -189,7 +189,7 @@ public class FileTreeManager {
 
 	public void rebuildFileTree() {
 		if (fileTreeAdapter != null) {
-			fileTreeAdapter.rebuildTree();
+			loadFileTree();
 		}
 	}
 }
