@@ -1,0 +1,144 @@
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical"
+	android:background="@color/surface_container_lowest">
+	<LinearLayout
+		android:id="@+id/layout_empty_state"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:padding="16dp"
+		android:gravity="center_horizontal|center_vertical"
+		android:orientation="vertical"
+		android:layout_weight="1"
+		android:visibility="gone"
+		tools:visibility="visible">
+		<ImageView
+			android:id="@+id/imageview1"
+			android:layout_width="80dp"
+			android:layout_height="80dp"
+			android:layout_marginBottom="8dp"
+			android:src="@drawable/ic_codex_logo"
+			android:scaleType="center"
+			android:focusable="false"
+			android:contentDescription="CodeXLogo"
+			app:tint="@color/primary" />
+		<TextView
+			android:id="@+id/text_greeting"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="16dp"
+			android:gravity="center_horizontal|center_vertical"
+			android:text="Hello dear CodeX User!\nHow can I help you today\\?"
+			android:textSize="20sp"
+			android:textStyle="bold"
+			android:textColor="@color/on_surface"
+			android:focusable="false" />
+		<TextView
+			android:id="@+id/textview1"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="24dp"
+			android:gravity="center_horizontal|center_vertical"
+			android:text="Write what you want CodeX to build for you or ask for ideas!"
+			android:textSize="14sp"
+			android:textColor="@color/on_surface_variant"
+			android:focusable="false" />
+	</LinearLayout>
+	<androidx.recyclerview.widget.RecyclerView
+		android:id="@+id/recycler_view_chat_history"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:paddingTop="8dp"
+		android:layout_weight="1"
+		android:paddingStart="8dp"
+		android:paddingEnd="8dp"
+		android:clipToPadding="false"
+		android:overScrollMode="never"
+		app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+		android:visibility="visible"
+		tools:visibility="gone" />
+	<LinearLayout
+		android:id="@+id/layout_input_section"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:padding="8dp"
+		android:orientation="vertical"
+		android:background="@android:color/white"
+		android:paddingStart="16dp"
+		android:paddingEnd="16dp"
+		android:elevation="4dp">
+		<LinearLayout
+			android:id="@+id/layout_model_selector_custom"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="8dp"
+			android:padding="6dp"
+			android:background="@drawable/rounded_background_grey"
+			android:gravity="center_vertical"
+			android:orientation="horizontal"
+			android:paddingStart="12dp"
+			android:paddingEnd="12dp"
+			android:focusable="true">
+			<TextView
+				android:id="@+id/text_selected_model"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="Gemini 2.0 Flash"
+				android:textSize="12sp"
+				android:textColor="@color/on_surface"
+				android:focusable="false" />
+			<ImageView
+				android:id="@+id/imageview2"
+				android:layout_width="16dp"
+				android:layout_height="16dp"
+				android:src="@drawable/ic_expand_more"
+				android:scaleType="fitXY"
+				android:focusable="false"
+				android:layout_marginStart="4dp"
+				android:contentDescription="SelectAIModel"
+				app:tint="@color/on_surface_variant" />
+		</LinearLayout>
+		<LinearLayout
+			android:id="@+id/linear_prompt_input"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:padding="8dp"
+			android:background="@drawable/rounded_edittext_background_with_border"
+			android:gravity="center_vertical"
+			android:orientation="horizontal">
+			<EditText
+				android:id="@+id/edittext_ai_prompt"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:padding="4dp"
+				android:background="@android:color/transparent"
+				android:textSize="14sp"
+				android:textColor="@color/on_surface"
+				android:hint="How can CodeX help you today\\?"
+				android:textColorHint="@color/on_surface_variant"
+				android:layout_weight="1"
+				android:inputType="textMultiLine"
+				android:paddingStart="12dp"
+				android:paddingEnd="12dp"
+				android:minHeight="40dp"
+				android:maxLines="3"
+				android:scrollbars="vertical" />
+			<ImageButton
+				android:id="@+id/button_ai_send"
+				android:layout_width="36dp"
+				android:layout_height="36dp"
+				android:padding="8dp"
+				android:background="@drawable/circular_button_background_primary"
+				android:src="@drawable/ic_send"
+				android:scaleType="centerInside"
+				android:focusable="false"
+				android:contentDescription="Sendmessage"
+				android:tint="@android:color/white"
+				android:layout_marginStart="4dp" />
+		</LinearLayout>
+	</LinearLayout>
+</LinearLayout>
