@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.chip.Chip;
+// import com.google.android.material.chip.Chip; // Removed for Sketchware Pro compatibility
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
@@ -166,9 +166,9 @@ public class ModelSelectorBottomSheet extends BottomSheetDialogFragment {
             ImageView checkmark;
             ImageView modelIcon;
             LinearLayout featureBadges;
-            Chip visionChip;
-            Chip functionCallingChip;
-            Chip latestChip;
+            TextView visionChip;
+            TextView functionCallingChip;
+            TextView latestChip;
 
             ModelViewHolder(@NonNull View itemView) {
                 super(itemView);

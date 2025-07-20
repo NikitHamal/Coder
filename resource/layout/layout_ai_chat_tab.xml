@@ -70,7 +70,7 @@
                 android:layout_height="wrap_content"
                 android:text="I can help you write, debug, and improve your code. Ask me anything!"
                 android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                android:textColor="@color/on_surface_variant"
+                android:textColor="@color/secondary_text"
                 android:gravity="center"
                 android:layout_marginBottom="24dp" />
 
@@ -117,7 +117,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@color/surface_container"
+            android:background="@color/surface"
             android:elevation="8dp"
             android:paddingTop="12dp"
             android:paddingBottom="12dp"
@@ -158,7 +158,7 @@
                     android:layout_width="18dp"
                     android:layout_height="18dp"
                     android:src="@drawable/icon_arrow_drop_down_round"
-                    app:tint="@color/on_surface_variant" />
+                    app:tint="@color/secondary_text" />
 
             </LinearLayout>
 
@@ -188,7 +188,7 @@
                         android:hint="Ask me anything about your code..."
                         android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                         android:textColor="@color/on_surface"
-                        android:textColorHint="@color/on_surface_variant"
+                        android:textColorHint="@color/secondary_text"
                         android:background="@android:color/transparent"
                         android:inputType="textMultiLine|textCapSentences"
                         android:maxLines="6"

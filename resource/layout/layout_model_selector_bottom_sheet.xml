@@ -67,10 +67,6 @@
         android:hint="Search models..."
         app:startIconDrawable="@drawable/icon_search_round"
         app:endIconMode="clear_text"
-        app:boxCornerRadiusTopStart="12dp"
-        app:boxCornerRadiusTopEnd="12dp"
-        app:boxCornerRadiusBottomStart="12dp"
-        app:boxCornerRadiusBottomEnd="12dp"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
         <com.google.android.material.textfield.TextInputEditText
