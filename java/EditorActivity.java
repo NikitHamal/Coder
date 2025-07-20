@@ -153,6 +153,11 @@ public class EditorActivity extends AppCompatActivity implements
 
     @Override
     public void onBackPressed() {
+        // Check if drawer should handle back press first
+        if (uiManager.onBackPressed()) {
+            return;
+        }
+        // Otherwise delegate to normal back press handling
         uiManager.handleBackPressed(); // Delegate back press handling
     }
 

@@ -84,12 +84,38 @@ public class SettingsActivity extends AppCompatActivity {
 			modelSelectorLayout.setOnClickListener(v -> showModelSelector());
 		}
 		
-		// Set up save functionality
+		// Set up save functionality with multiple triggers
 		if (apiKeyEditText != null) {
+			// Save on focus change
 			apiKeyEditText.setOnFocusChangeListener((v, hasFocus) -> {
 				if (!hasFocus) {
-					String apiKey = apiKeyEditText.getText().toString();
+					String apiKey = apiKeyEditText.getText().toString().trim();
 					prefs.edit().putString("gemini_api_key", apiKey).apply();
+					Toast.makeText(this, "API Key saved", Toast.LENGTH_SHORT).show();
+				}
+			});
+			
+			// Also save on text change with debouncing
+			apiKeyEditText.addTextChangedListener(new android.text.TextWatcher() {
+				private android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+				private Runnable saveRunnable;
+				
+				@Override
+				public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+				
+				@Override
+				public void onTextChanged(CharSequence s, int start, int before, int count) {}
+				
+				@Override
+				public void afterTextChanged(android.text.Editable s) {
+					if (saveRunnable != null) {
+						handler.removeCallbacks(saveRunnable);
+					}
+					saveRunnable = () -> {
+						String apiKey = s.toString().trim();
+						prefs.edit().putString("gemini_api_key", apiKey).apply();
+					};
+					handler.postDelayed(saveRunnable, 1000); // Save after 1 second of no typing
 				}
 			});
 		}

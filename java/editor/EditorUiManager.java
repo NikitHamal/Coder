@@ -13,6 +13,7 @@ import androidx.core.view.GravityCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import com.google.android.material.navigation.NavigationView;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.codex.apk.EditorActivity;
@@ -43,11 +44,12 @@ public class EditorUiManager {
 
     // UI components
     private DrawerLayout drawerLayout;
+    private NavigationView navigationView;
     private MaterialToolbar toolbar;
     private TabLayout mainTabLayout;
     private ViewPager2 mainViewPager;
     private FloatingActionButton fabRun;
-    private LinearLayout drawerContentLayout;
+    private ActionBarDrawerToggle drawerToggle;
 
     public EditorUiManager(EditorActivity activity, File projectDir, FileManager fileManager, DialogHelper dialogHelper, ExecutorService executorService, List<TabItem> openTabs) {
         this.activity = activity;
@@ -63,12 +65,13 @@ public class EditorUiManager {
      */
     public void initializeViews() {
         try {
-            // drawerLayout = null; // No drawer layout in new design
+            // Initialize drawer components
+            drawerLayout = activity.findViewById(R.id.drawer_layout);
+            navigationView = activity.findViewById(R.id.navigation_drawer);
             toolbar = activity.findViewById(R.id.toolbar);
             mainTabLayout = activity.findViewById(R.id.tab_layout);
             mainViewPager = activity.findViewById(R.id.view_pager);
             fabRun = activity.findViewById(R.id.fab_run_code);
-            // drawerContentLayout = null; // No drawer content layout in new design
 
             if (fabRun != null) {
                 fabRun.setVisibility(View.GONE);
@@ -83,26 +86,60 @@ public class EditorUiManager {
      * Sets up the main toolbar for the activity.
      */
     public void setupToolbar() {
-        activity.setSupportActionBar(toolbar);
-        if (activity.getSupportActionBar() != null) {
-            activity.getSupportActionBar().setTitle(activity.getProjectName()); // Get project name from activity
-            activity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        if (toolbar != null) {
+            activity.setSupportActionBar(toolbar);
+            if (activity.getSupportActionBar() != null) {
+                activity.getSupportActionBar().setTitle(activity.getProjectName()); // Get project name from activity
+                activity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            }
+            
+            // Setup drawer toggle
+            if (drawerLayout != null) {
+                drawerToggle = new ActionBarDrawerToggle(
+                    activity, drawerLayout, toolbar,
+                    R.string.app_name, R.string.app_name) {
+                    
+                    @Override
+                    public void onDrawerOpened(View drawerView) {
+                        super.onDrawerOpened(drawerView);
+                        activity.invalidateOptionsMenu();
+                    }
+                    
+                    @Override
+                    public void onDrawerClosed(View drawerView) {
+                        super.onDrawerClosed(drawerView);
+                        activity.invalidateOptionsMenu();
+                    }
+                };
+                
+                drawerLayout.addDrawerListener(drawerToggle);
+                drawerToggle.syncState();
+            }
         }
-
-        // No drawer toggle needed in new design with side panel
     }
 
     /**
-     * Toggles the file tree panel visibility.
+     * Toggles the navigation drawer.
      */
     public void toggleDrawer() {
-        // Toggle file tree panel visibility
-        View fileTreeCard = activity.findViewById(R.id.card_file_tree);
-        if (fileTreeCard != null) {
-            fileTreeCard.setVisibility(
-                fileTreeCard.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE
-            );
+        if (drawerLayout != null) {
+            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                drawerLayout.closeDrawer(GravityCompat.START);
+            } else {
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
         }
+    }
+    
+    /**
+     * Handles back press for drawer.
+     */
+    public boolean onBackPressed() {
+        if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START);
+            return true;
+        }
+        return false;
     }
 
     /**

@@ -21,7 +21,7 @@
             android:paddingTop="8dp"
             android:paddingBottom="8dp"
             android:paddingHorizontal="16dp"
-            android:scrollbars="vertical" />
+            android:scrollbars="none" />
 
         <!-- Empty State -->
         <LinearLayout
@@ -194,7 +194,7 @@
                         android:maxLines="6"
                         android:minLines="1"
                         android:padding="12dp"
-                        android:scrollbars="vertical" />
+                        android:scrollbars="none" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 

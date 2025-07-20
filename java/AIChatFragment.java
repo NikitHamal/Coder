@@ -131,20 +131,34 @@ public class AIChatFragment extends Fragment implements ModelSelectorBottomSheet
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.layout_ai_chat_tab, container, false);
 
-        // Initialize UI components
-        recyclerViewChatHistory = view.findViewById(R.id.recycler_view_chat_history);
-        editTextAiPrompt = view.findViewById(R.id.edit_text_ai_prompt);
-        buttonAiSend = view.findViewById(R.id.button_ai_send);
+        // Initialize UI components with null checks
+        try {
+            recyclerViewChatHistory = view.findViewById(R.id.recycler_view_chat_history);
+            editTextAiPrompt = view.findViewById(R.id.edit_text_ai_prompt);
+            buttonAiSend = view.findViewById(R.id.button_ai_send);
 
-        // Empty state UI elements
-        layoutEmptyState = view.findViewById(R.id.layout_empty_state);
-        textGreeting = view.findViewById(R.id.text_greeting);
+            // Empty state UI elements
+            layoutEmptyState = view.findViewById(R.id.layout_empty_state);
+            textGreeting = view.findViewById(R.id.text_greeting);
 
-        // Input section UI elements
-        layoutInputSection = view.findViewById(R.id.layout_input_section);
-        layoutModelSelectorCustom = view.findViewById(R.id.layout_model_selector_custom);
-        textSelectedModel = view.findViewById(R.id.text_selected_model);
-        linearPromptInput = view.findViewById(R.id.linear_prompt_input);
+            // Input section UI elements
+            layoutInputSection = view.findViewById(R.id.layout_input_section);
+            layoutModelSelectorCustom = view.findViewById(R.id.layout_model_selector_custom);
+            textSelectedModel = view.findViewById(R.id.text_selected_model);
+            linearPromptInput = view.findViewById(R.id.linear_prompt_input);
+            
+            // Verify critical components exist
+            if (recyclerViewChatHistory == null || editTextAiPrompt == null || buttonAiSend == null) {
+                throw new RuntimeException("Critical UI components not found in layout");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing UI components", e);
+            // Return a simple error view if layout inflation fails
+            TextView errorView = new TextView(getContext());
+            errorView.setText("Error loading chat interface");
+            errorView.setGravity(android.view.Gravity.CENTER);
+            return errorView;
+        }
 
         // Set up RecyclerView
         chatMessageAdapter = new ChatMessageAdapter(getContext(), chatHistory);
