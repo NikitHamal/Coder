@@ -174,6 +174,9 @@ public class SettingsActivity extends AppCompatActivity {
 						Toast.makeText(requireContext(), 
 						"Font family will be applied when you restart the app", 
 						Toast.LENGTH_SHORT).show();
+
+						// Recreate the activity to apply changes
+						requireActivity().recreate();
 					});
 					return true;
 				});

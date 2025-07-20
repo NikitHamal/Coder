@@ -186,4 +186,10 @@ public class FileTreeManager {
             activity.refreshFileTabLayoutInFragment();
         }
     }
+
+	public void rebuildFileTree() {
+		if (fileTreeAdapter != null) {
+			fileTreeAdapter.rebuildTree();
+		}
+	}
 }

@@ -77,6 +77,10 @@ public class FileManager {
 			throw new IOException("File name contains invalid characters");
 		}
 
+		if (!isValidFileName(fileName)) {
+			throw new IOException("Invalid file name");
+		}
+
 		File newFile = new File(parentDirectory, fileName);
 		if (newFile.exists()) {
 			throw new IOException("File already exists");
@@ -102,6 +106,10 @@ public class FileManager {
 
 		if (autoInvalidFileNameChars.matcher(folderName).find()) {
 			throw new IOException("Folder name contains invalid characters");
+		}
+
+		if (!isValidFileName(folderName)) {
+			throw new IOException("Invalid folder name");
 		}
 
 		File newFolder = new File(parentDirectory, folderName);
@@ -236,5 +244,18 @@ public class FileManager {
 			return relative;
 		}
 		return file.getName();
+	}
+
+	public boolean isValidFileName(String fileName) {
+		if (fileName == null || fileName.isEmpty()) {
+			return false;
+		}
+		if (fileName.contains("/") || fileName.contains("\\") || fileName.contains(":")) {
+			return false;
+		}
+		if (fileName.trim().isEmpty()) {
+			return false;
+		}
+		return true;
 	}
 }
