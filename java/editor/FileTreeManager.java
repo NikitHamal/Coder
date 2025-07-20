@@ -44,28 +44,17 @@ public class FileTreeManager {
      * Sets up the file tree RecyclerView in the navigation drawer.
      */
     public void setupFileTree() {
-        recyclerViewFileTree = activity.findViewById(R.id.recyclerview_file_tree);
-        fileTreeAdapter = new FileTreeAdapter(activity, fileItems, activity.findViewById(R.id.drawer_layout), activity); // Pass activity for callbacks
+        		recyclerViewFileTree = activity.findViewById(R.id.recycler_view_file_tree);
+        fileTreeAdapter = new FileTreeAdapter(activity, fileItems, null, activity); // No drawer layout in new design
         recyclerViewFileTree.setAdapter(fileTreeAdapter);
         recyclerViewFileTree.setLayoutManager(new LinearLayoutManager(activity));
 
-        MaterialToolbar drawerToolbar = activity.findViewById(R.id.drawer_toolbar);
-        drawerToolbar.setTitle("Project Files");
+        TextView projectNameText = activity.findViewById(R.id.text_project_name);
+        if (projectNameText != null) {
+            projectNameText.setText("Project Files");
+        }
 
-        drawerToolbar.setOnMenuItemClickListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.action_new_file) {
-                showNewFileDialog(activity.getProjectDirectory()); // Get project directory from activity
-                return true;
-            } else if (id == R.id.action_new_folder) {
-                showNewFolderDialog(activity.getProjectDirectory()); // Get project directory from activity
-                return true;
-            } else if (id == R.id.action_refresh) {
-                loadFileTree();
-                return true;
-            }
-            return false;
-        });
+        // File tree actions will be handled through context menus in the adapter
 
         loadFileTree(); // Initial load
     }

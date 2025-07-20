@@ -34,11 +34,9 @@ public class SettingsActivity extends AppCompatActivity {
 		getSupportActionBar().setTitle("Settings");
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		
-		// Load settings fragment
-		getSupportFragmentManager()
-		.beginTransaction()
-		.replace(R.id.settings_container, new SettingsFragment())
-		.commit();
+		// Settings UI is directly in the layout, no fragment needed
+		// Initialize settings controls
+		initializeSettings();
 	}
 	
 	@Override
@@ -50,6 +48,61 @@ public class SettingsActivity extends AppCompatActivity {
 		return super.onOptionsItemSelected(item);
 	}
 	
+	private void initializeSettings() {
+		// Initialize settings controls from the layout
+		com.google.android.material.textfield.TextInputEditText apiKeyEditText = findViewById(R.id.edit_text_api_key);
+		LinearLayout modelSelectorLayout = findViewById(R.id.layout_model_selector);
+		TextView selectedModelText = findViewById(R.id.text_selected_model);
+		
+		// Load saved settings
+		SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
+		String savedApiKey = prefs.getString("gemini_api_key", "");
+		String savedModel = prefs.getString("selected_model", "Gemini 2.5 Flash");
+		
+		if (apiKeyEditText != null) {
+			apiKeyEditText.setText(savedApiKey);
+		}
+		
+		if (selectedModelText != null) {
+			selectedModelText.setText(savedModel);
+		}
+		
+		// Set up model selector click
+		if (modelSelectorLayout != null) {
+			modelSelectorLayout.setOnClickListener(v -> showModelSelector());
+		}
+		
+		// Set up save functionality
+		if (apiKeyEditText != null) {
+			apiKeyEditText.setOnFocusChangeListener((v, hasFocus) -> {
+				if (!hasFocus) {
+					String apiKey = apiKeyEditText.getText().toString();
+					prefs.edit().putString("gemini_api_key", apiKey).apply();
+				}
+			});
+		}
+	}
+	
+	private void showModelSelector() {
+		ModelSelectorBottomSheet modelSelector = ModelSelectorBottomSheet.newInstance(
+			getSharedPreferences("settings", MODE_PRIVATE).getString("selected_model", "Gemini 2.5 Flash"),
+			AIAssistant.AIModel.getAllDisplayNames()
+		);
+		
+		modelSelector.setModelSelectionListener(selectedModelDisplayName -> {
+			TextView selectedModelText = findViewById(R.id.text_selected_model);
+			if (selectedModelText != null) {
+				selectedModelText.setText(selectedModelDisplayName);
+			}
+			getSharedPreferences("settings", MODE_PRIVATE)
+				.edit()
+				.putString("selected_model", selectedModelDisplayName)
+				.apply();
+		});
+		
+		modelSelector.show(getSupportFragmentManager(), "model_selector");
+	}
+
 	public static class SettingsFragment extends PreferenceFragmentCompat {
 		@Override
 		public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {

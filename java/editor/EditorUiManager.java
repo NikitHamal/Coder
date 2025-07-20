@@ -62,12 +62,12 @@ public class EditorUiManager {
      * Initializes the main UI components from the layout.
      */
     public void initializeViews() {
-        drawerLayout = activity.findViewById(R.id.drawer_layout);
+        // drawerLayout = null; // No drawer layout in new design
         toolbar = activity.findViewById(R.id.toolbar);
-        mainTabLayout = activity.findViewById(R.id.main_tab_layout);
-        mainViewPager = activity.findViewById(R.id.main_view_pager);
-        fabRun = activity.findViewById(R.id.fab_run);
-        drawerContentLayout = activity.findViewById(R.id.linear5);
+        mainTabLayout = activity.findViewById(R.id.tab_layout);
+        mainViewPager = activity.findViewById(R.id.view_pager);
+        fabRun = activity.findViewById(R.id.fab_run_code);
+        // drawerContentLayout = null; // No drawer content layout in new design
 
         fabRun.setVisibility(View.GONE);
     }
@@ -82,20 +82,19 @@ public class EditorUiManager {
             activity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                activity, drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawerLayout.addDrawerListener(toggle);
-        toggle.syncState();
+        // No drawer toggle needed in new design with side panel
     }
 
     /**
-     * Toggles the navigation drawer open or closed.
+     * Toggles the file tree panel visibility.
      */
     public void toggleDrawer() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START);
-        } else {
-            drawerLayout.openDrawer(GravityCompat.START);
+        // Toggle file tree panel visibility
+        View fileTreeCard = activity.findViewById(R.id.card_file_tree);
+        if (fileTreeCard != null) {
+            fileTreeCard.setVisibility(
+                fileTreeCard.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE
+            );
         }
     }
 
@@ -103,11 +102,8 @@ public class EditorUiManager {
      * Handles the back press logic for the activity.
      */
     public void handleBackPressed() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START);
-        } else {
-            checkUnsavedChangesBeforeExit();
-        }
+        // No drawer to close, go directly to exit check
+        checkUnsavedChangesBeforeExit();
     }
 
     /**
@@ -233,12 +229,10 @@ public class EditorUiManager {
     }
 
     /**
-     * Closes the navigation drawer if it is open.
+     * Closes the file tree panel if it is open.
      */
     public void closeDrawerIfOpen() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START);
-        }
+        // No action needed for side panel design
     }
 
     /**

@@ -71,7 +71,7 @@ public class FileTreeAdapter extends RecyclerView.Adapter<FileTreeAdapter.ViewHo
                 editorActivity.loadFileTree(); // Call through EditorActivity
             } else {
                 editorActivity.openFile(item.getFile()); // Call through EditorActivity
-                drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START); // Use androidx.core.view.GravityCompat
+                // No drawer to close in new side panel design
             }
         });
 

@@ -98,7 +98,7 @@ public class AiAssistantManager implements AIAssistant.AIActionListener { // Dir
         }
 
         String apiKey;
-        if (aiAssistant.getCurrentModel() == AIAssistant.AIModel.GEMINI_2_FLASH) {
+        if (aiAssistant.getCurrentModel() == AIAssistant.AIModel.GEMINI_2_0_FLASH) {
             apiKey = SettingsActivity.getGeminiApiKey(activity);
             if (apiKey.isEmpty()) {
                 activity.showToast("Gemini API Key not configured. Please set it in Settings.");
