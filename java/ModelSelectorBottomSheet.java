@@ -15,15 +15,15 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
-import com.google.android.material.button.MaterialButton;
+import androidx.fragment.app.DialogFragment;
+import android.widget.Button;
 // import com.google.android.material.chip.Chip; // Removed for Sketchware Pro compatibility
-import com.google.android.material.textfield.TextInputEditText;
+import android.widget.EditText;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ModelSelectorBottomSheet extends BottomSheetDialogFragment {
+public class ModelSelectorBottomSheet extends DialogFragment {
 
     private static final String ARG_SELECTED_MODEL = "selected_model";
     private static final String ARG_MODEL_NAMES = "model_names";
@@ -33,7 +33,7 @@ public class ModelSelectorBottomSheet extends BottomSheetDialogFragment {
     private ArrayList<String> filteredModelNames;
     private ModelSelectionListener listener;
     private ModelAdapter adapter;
-    private TextInputEditText searchEditText;
+    private EditText searchEditText;
 
     public interface ModelSelectionListener {
         void onModelSelected(String selectedModelDisplayName);
@@ -79,7 +79,7 @@ public class ModelSelectorBottomSheet extends BottomSheetDialogFragment {
         recyclerView.setAdapter(adapter);
 
         // Model info button
-        MaterialButton modelInfoButton = view.findViewById(R.id.button_model_info);
+        Button modelInfoButton = view.findViewById(R.id.button_model_info);
         modelInfoButton.setOnClickListener(v -> showModelInfoDialog());
 
         return view;

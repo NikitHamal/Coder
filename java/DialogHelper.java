@@ -8,9 +8,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
-
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.textfield.TextInputEditText;
+import android.widget.EditText;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,9 +32,9 @@ public class DialogHelper {
 
 	public void showNewFileDialog(File parentDirectory) {
 		View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_new_file, null);
-		TextInputEditText editTextFileName = dialogView.findViewById(R.id.edittext_file_name);
+		EditText editTextFileName = dialogView.findViewById(R.id.edittext_file_name);
 
-		AlertDialog dialog = new MaterialAlertDialogBuilder(context)
+		AlertDialog dialog = new AlertDialog.Builder(context)
 		.setTitle("Create New File in " + parentDirectory.getName())
 		.setView(dialogView)
 		.setPositiveButton("Create", null)
@@ -93,7 +91,7 @@ public class DialogHelper {
 		View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_new_folder, null);
 		EditText editTextFolderName = dialogView.findViewById(R.id.edittext_folder_name);
 
-		AlertDialog dialog = new MaterialAlertDialogBuilder(context)
+		AlertDialog dialog = new AlertDialog.Builder(context)
 		.setTitle("Create New Folder in " + parentDirectory.getName())
 		.setView(dialogView)
 		.setPositiveButton("Create", null)
@@ -115,7 +113,7 @@ public class DialogHelper {
 	}
 
 	public void showUnsavedChangesDialog(Runnable onSave, Runnable onDiscard) {
-		new MaterialAlertDialogBuilder(context)
+		new AlertDialog.Builder(context)
 		.setTitle("Unsaved Changes")
 		.setMessage("You have unsaved changes. Do you want to save them before exiting?")
 		.setPositiveButton("Save All", (dialog, which) -> onSave.run())
@@ -125,7 +123,7 @@ public class DialogHelper {
 	}
 
 	public void showTabCloseConfirmationDialog(String fileName, Runnable onSave, Runnable onDiscard) {
-		new MaterialAlertDialogBuilder(context)
+		new AlertDialog.Builder(context)
 		.setTitle("Unsaved Changes")
 		.setMessage("Save changes to " + fileName + "?")
 		.setPositiveButton("Save", (dialog, which) -> onSave.run())
@@ -135,7 +133,7 @@ public class DialogHelper {
 	}
 
 	public void showCloseOtherTabsDialog(Runnable onSaveAll, Runnable onDiscardAll) {
-		new MaterialAlertDialogBuilder(context)
+		new AlertDialog.Builder(context)
 		.setTitle("Unsaved Changes")
 		.setMessage("Save changes in other tabs before closing?")
 		.setPositiveButton("Save All Other", (dialog, which) -> onSaveAll.run())
@@ -145,7 +143,7 @@ public class DialogHelper {
 	}
 
 	public void showCloseAllTabsDialog(Runnable onSaveAll, Runnable onDiscardAll) {
-		new MaterialAlertDialogBuilder(context)
+		new AlertDialog.Builder(context)
 		.setTitle("Unsaved Changes")
 		.setMessage("Save all changes before closing tabs?")
 		.setPositiveButton("Save All", (dialog, which) -> onSaveAll.run())
@@ -155,7 +153,7 @@ public class DialogHelper {
 	}
 
 	public void showIndexStatusDialog() {
-		new MaterialAlertDialogBuilder(context)
+		new AlertDialog.Builder(context)
 		.setTitle("Codebase Index Status")
 		.setMessage("The codebase index helps the AI understand your project structure. It updates automatically when files change.")
 		.setPositiveButton("Force Refresh", (dialog, which) -> {
@@ -184,7 +182,7 @@ public class DialogHelper {
 			}
 		}
 
-		new MaterialAlertDialogBuilder(context)
+		new AlertDialog.Builder(context)
 		.setTitle("AI Assistant Results")
 		.setMessage(message.toString())
 		.setPositiveButton("OK", null)

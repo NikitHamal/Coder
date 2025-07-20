@@ -12,10 +12,10 @@ import android.widget.Toast;
 import android.widget.Button; // Import Button for casting
 
 import androidx.appcompat.app.AlertDialog;
-import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.textfield.TextInputEditText; // Import for TextInputEditText
-import com.google.android.material.button.MaterialButton; // Import for MaterialButton
+import androidx.cardview.widget.CardView;
+import androidx.appcompat.app.AlertDialog;
+import android.widget.EditText; // Import for EditText
+import android.widget.Button; // Import for Button
 
 import java.io.File;
 import java.io.IOException; // ADDED: Import for IOException
@@ -112,7 +112,7 @@ public class ProjectsAdapter extends BaseAdapter {
         editTextNewName.setText(oldName); // Pre-fill with current name
         editTextNewName.setSelection(oldName.length()); // Place cursor at end
 
-        AlertDialog dialog = new MaterialAlertDialogBuilder(context, R.style.AlertDialogCustom)
+        AlertDialog dialog = new AlertDialog.Builder(context, R.style.AlertDialogCustom)
                 .setTitle("Rename Project")
                 .setView(dialogView)
                 .setPositiveButton("Rename", null) // Set to null initially to control dismissal
@@ -120,7 +120,7 @@ public class ProjectsAdapter extends BaseAdapter {
                 .create();
 
         dialog.setOnShowListener(dialogInterface -> {
-            MaterialButton positiveButton = (MaterialButton) dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
             positiveButton.setOnClickListener(v -> {
                 String newName = editTextNewName.getText().toString().trim();
 
@@ -171,7 +171,7 @@ public class ProjectsAdapter extends BaseAdapter {
             return;
         }
 
-        new MaterialAlertDialogBuilder(context, R.style.AlertDialogCustom) // Use custom dialog style
+        new AlertDialog.Builder(context, R.style.AlertDialogCustom) // Use custom dialog style
                 .setTitle("Delete Project")
                 .setMessage("Are you sure you want to delete '" + projectName + "'? This cannot be undone.")
                 .setPositiveButton("Delete", (dialog, which) -> {

@@ -7,7 +7,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBarDrawerToggle;
-import com.google.android.material.appbar.MaterialToolbar; // Corrected import for MaterialToolbar
+import androidx.appcompat.widget.Toolbar; // Corrected import for Toolbar
 import androidx.core.graphics.Insets;
 import androidx.core.view.GravityCompat;
 import androidx.core.view.ViewCompat;
@@ -23,9 +23,9 @@ import com.codex.apk.SettingsActivity;
 import com.codex.apk.TabItem;
 import com.codex.apk.DialogHelper; // Added import for DialogHelper
 import com.codex.apk.editor.adapters.MainPagerAdapter;
-import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
-import com.google.android.material.tabs.TabLayout;
-import com.google.android.material.tabs.TabLayoutMediator;
+// Removed Material components to avoid Kotlin dependencies
+import android.widget.Button;
+import android.widget.FrameLayout;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,10 +43,10 @@ public class EditorUiManager {
 
     // UI components
     private DrawerLayout drawerLayout;
-    private MaterialToolbar toolbar;
-    private TabLayout mainTabLayout;
-    private ViewPager2 mainViewPager;
-    private ExtendedFloatingActionButton fabRun;
+    private Toolbar toolbar;
+    private LinearLayout mainTabLayout;
+    private FrameLayout mainViewPager;
+    private Button fabRun;
     private LinearLayout drawerContentLayout;
 
     public EditorUiManager(EditorActivity activity, File projectDir, FileManager fileManager, DialogHelper dialogHelper, ExecutorService executorService, List<TabItem> openTabs) {

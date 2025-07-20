@@ -32,10 +32,11 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
-import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.button.MaterialButton;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.textfield.TextInputEditText;
+import androidx.appcompat.widget.Toolbar;
+import android.widget.Button;
+import androidx.appcompat.app.AlertDialog;
+import android.widget.EditText;
+// Removed FloatingActionButton to avoid Kotlin dependencies
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -72,11 +73,11 @@ public class MainActivity extends AppCompatActivity {
     private ListView listViewProjects;
     private TextView textEmptyProjects;
     private LinearLayout layoutEmptyState;
-    private MaterialToolbar toolbar;
+    private Toolbar toolbar;
 
     // New buttons instead of FABs
-    private MaterialButton buttonNewProject;
-    private MaterialButton buttonImportProject;
+    private Button buttonNewProject;
+    private Button buttonImportProject;
 
     private ArrayList<HashMap<String, Object>> projectsList;
     private ProjectsAdapter projectsAdapter;
@@ -115,18 +116,18 @@ public class MainActivity extends AppCompatActivity {
         buttonImportProject.setOnClickListener(v -> importProject());
         
         // Additional button listeners
-        MaterialButton buttonRefreshProjects = findViewById(R.id.button_refresh_projects);
+        Button buttonRefreshProjects = findViewById(R.id.button_refresh_projects);
         if (buttonRefreshProjects != null) {
             buttonRefreshProjects.setOnClickListener(v -> refreshProjectsList());
         }
         
-        MaterialButton buttonCreateFirstProject = findViewById(R.id.button_create_first_project);
+        Button buttonCreateFirstProject = findViewById(R.id.button_create_first_project);
         if (buttonCreateFirstProject != null) {
             buttonCreateFirstProject.setOnClickListener(v -> showNewProjectDialog());
         }
         
-        // Extended FAB click listener
-        com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton fabQuickActions = findViewById(R.id.fab_quick_actions);
+        // Quick actions button (replaced FAB to avoid Kotlin dependencies)
+        Button fabQuickActions = findViewById(R.id.fab_quick_actions);
         if (fabQuickActions != null) {
             fabQuickActions.setOnClickListener(v -> showQuickActionsMenu());
         }
@@ -190,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showManageStoragePermissionDialog() {
-        new MaterialAlertDialogBuilder(this, R.style.AlertDialogCustom)
+        new AlertDialog.Builder(this, R.style.AlertDialogCustom)
                 .setTitle("Permission Required")
                 .setMessage("CodeX needs 'All Files Access' permission to manage your project files. Please grant this permission in settings.")
                 .setPositiveButton("Grant", (dialog, which) -> {
@@ -331,10 +332,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_new_project, null);
-        TextInputEditText editTextProjectName = dialogView.findViewById(R.id.edittext_project_name);
-        MaterialButton buttonTemplateBlank = dialogView.findViewById(R.id.button_template_blank);
-        MaterialButton buttonTemplateBasic = dialogView.findViewById(R.id.button_template_basic);
-        MaterialButton buttonTemplateResponsive = dialogView.findViewById(R.id.button_template_responsive);
+        EditText editTextProjectName = dialogView.findViewById(R.id.edittext_project_name);
+        Button buttonTemplateBlank = dialogView.findViewById(R.id.button_template_blank);
+        Button buttonTemplateBasic = dialogView.findViewById(R.id.button_template_basic);
+        Button buttonTemplateResponsive = dialogView.findViewById(R.id.button_template_responsive);
 
         final String[] selectedTemplate = {"blank"};
 
@@ -371,7 +372,7 @@ public class MainActivity extends AppCompatActivity {
         buttonTemplateBlank.performClick();
 
 
-        AlertDialog dialog = new MaterialAlertDialogBuilder(this, R.style.AlertDialogCustom)
+        AlertDialog dialog = new AlertDialog.Builder(this, R.style.AlertDialogCustom)
                 .setTitle("Create New Project")
                 .setView(dialogView)
                 .setPositiveButton("Create", null)
@@ -379,7 +380,7 @@ public class MainActivity extends AppCompatActivity {
                 .create();
 
         dialog.setOnShowListener(dialogInterface -> {
-            MaterialButton positiveButton = (MaterialButton) dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
             positiveButton.setOnClickListener(v -> {
                 String projectName = editTextProjectName.getText().toString().trim();
 
@@ -830,10 +831,10 @@ public class MainActivity extends AppCompatActivity {
      * Show quick actions menu with modern options
      */
     private void showQuickActionsMenu() {
-        com.google.android.material.bottomsheet.BottomSheetDialog bottomSheet = 
-            new com.google.android.material.bottomsheet.BottomSheetDialog(this);
-        
         View view = getLayoutInflater().inflate(R.layout.bottom_sheet_quick_actions, null);
+        AlertDialog bottomSheet = new AlertDialog.Builder(this)
+            .setView(view)
+            .create();
         
         // Quick action buttons
         view.findViewById(R.id.action_new_project).setOnClickListener(v -> {
@@ -851,7 +852,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, SettingsActivity.class));
         });
         
-        bottomSheet.setContentView(view);
         bottomSheet.show();
     }
 }

@@ -17,8 +17,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.MenuItem;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.textfield.TextInputEditText;
+import androidx.appcompat.app.AlertDialog;
+import android.widget.EditText;
 
 import java.io.File;
 import java.io.IOException;
@@ -140,11 +140,11 @@ public class FileTreeAdapter extends RecyclerView.Adapter<FileTreeAdapter.ViewHo
 
     private void showRenameDialog(final FileItem item) {
         View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_rename_file, null);
-        TextInputEditText editTextNewName = dialogView.findViewById(R.id.edittext_new_name);
+        EditText editTextNewName = dialogView.findViewById(R.id.edittext_new_name);
         editTextNewName.setText(item.getName());
         editTextNewName.requestFocus();
 
-        new MaterialAlertDialogBuilder(context)
+        new AlertDialog.Builder(context)
         .setTitle("Rename " + (item.isDirectory() ? "Folder" : "File"))
         .setView(dialogView)
         .setPositiveButton("Rename", (dialog, which) -> {
@@ -180,7 +180,7 @@ public class FileTreeAdapter extends RecyclerView.Adapter<FileTreeAdapter.ViewHo
     }
 
     private void showDeleteDialog(final FileItem item) {
-        new MaterialAlertDialogBuilder(context)
+        new AlertDialog.Builder(context)
         .setTitle("Delete " + (item.isDirectory() ? "Folder" : "File"))
         .setMessage("Are you sure you want to delete '" + item.getName() + "'? This cannot be undone.")
         .setPositiveButton("Delete", (dialog, which) -> {
