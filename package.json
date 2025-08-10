@@ -1,7 +1,7 @@
 {
-  "name": "qwen-proxy-server",
-  "version": "1.0.0",
-  "description": "Node.js server to proxy requests to Qwen API.",
+  "name": "coder-gemini",
+  "version": "2.0.0",
+  "description": "Modern coding environment with Gemini AI integration.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -9,17 +9,20 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "qwen",
-    "proxy",
+    "gemini",
     "ai",
-    "api"
+    "coding",
+    "editor",
+    "google"
   ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "axios": "^1.7.2",
     "cors": "^2.8.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"
