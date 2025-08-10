@@ -1,17 +1,17 @@
+import { gemini } from '../../../gemini.js';
+
 export class AIService {
     constructor() {
-        this.serverUrl = 'http://localhost:3001'; // Adjust if your server runs elsewhere
     }
 
     /**
-     * Generates slide content using the Qwen AI backend.
+     * Generates slide content using the Gemini AI.
      * @param {string} prompt - The user's prompt describing the slides.
      * @param {number} slideCount - The desired number of slides.
      * @param {string} slideStyle - The desired visual style.
      * @returns {Promise<Array<object>>} - A promise that resolves to an array of slide data objects.
      */
     async generateSlidesContent(prompt, slideCount, slideStyle) {
-        // Detect slide size from DOM if possible
         let slideWidth = 860;
         let slideHeight = 540;
         let slidePadding = 50;
@@ -50,28 +50,24 @@ Example structure for a slide:
 Generate exactly ${slideCount} slide objects in a JSON array. Make sure the JSON is valid and fits the given dimensions.`;
 
         try {
-            // Using the dedicated slide generation endpoint
-            const response = await fetch(`${this.serverUrl}/api/generate-slides`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    prompt: aiPrompt, 
-                    slideCount, 
-                    slideStyle
-                })
-            });
+            const response = await gemini.generateContent(aiPrompt, 'gemini-2.5-flash', false);
+            const data = await response.json();
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: response.statusText }));
-                console.error('Error response from server:', errorData);
-                throw new Error(`Server error: ${response.status} - ${errorData.message || 'Unknown error'}`);
+            let rawContent = '';
+            if (data.candidates && data.candidates.length > 0) {
+                rawContent = data.candidates[0].content.parts[0].text;
+            } else {
+                throw new Error("Received empty response from Gemini API.");
             }
 
-            const slidesData = await response.json();
+            const jsonMatch = rawContent.match(/```json\s*([\s\S]*?)\s*```/);
+            let slidesData;
+            if (jsonMatch && jsonMatch[1]) {
+                slidesData = JSON.parse(jsonMatch[1]);
+            } else {
+                slidesData = JSON.parse(rawContent);
+            }
 
-            // Basic validation of the response structure
             if (!Array.isArray(slidesData)) {
                 console.error('Invalid response format from AI. Expected an array:', slidesData);
                 throw new Error('Invalid response format from AI: Expected an array.');
@@ -79,7 +75,6 @@ Generate exactly ${slideCount} slide objects in a JSON array. Make sure the JSON
             
             if (slidesData.length === 0 && slideCount > 0) {
                 console.warn('AI returned an empty array of slides.');
-                // Return empty array, maybe show a message later
             }
 
             console.log('Received slide data:', slidesData);
@@ -87,7 +82,6 @@ Generate exactly ${slideCount} slide objects in a JSON array. Make sure the JSON
 
         } catch (error) {
             console.error('Error fetching slide data:', error);
-            // Re-throw the error so it can be caught in app.js
             throw new Error(`Failed to generate slides: ${error.message}`);
         }
     }

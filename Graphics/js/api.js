@@ -1,16 +1,15 @@
-const API_ENDPOINT = '/generate-graphic'; // Assuming this endpoint exists on your server.js
+import { gemini } from '../../gemini.js';
 
 /**
- * Calls the backend API to generate graphic data based on the prompt and size.
+ * Calls the Gemini API to generate graphic data based on the prompt and size.
  * @param {string} prompt - The user's description of the graphic.
  * @param {number} width - The desired width of the graphic.
  * @param {number} height - The desired height of the graphic.
  * @returns {Promise<object>} - A promise that resolves with the graphic data object.
  */
-async function callQwenAPI(prompt, width, height) {
-    console.log('Sending request to API endpoint:', API_ENDPOINT);
+async function generateGraphic(prompt, width, height) {
+    console.log('Sending request to Gemini API for graphic generation.');
 
-    // Construct the prompt for the AI, requesting the specific JSON format
     const structuredPrompt = `
         Generate a graphic based on the following description: '${prompt}'.
         The canvas size should be ${width}x${height} pixels.
@@ -31,44 +30,37 @@ async function callQwenAPI(prompt, width, height) {
     `;
 
     try {
-        const response = await fetch(API_ENDPOINT, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            // Send the structured prompt to the backend
-            // The backend server.js should handle passing this (or the relevant parts)
-            // to the actual Qwen API.
-            body: JSON.stringify({ prompt: structuredPrompt, width, height }),
-        });
-
-        if (!response.ok) {
-            // Try to get error details from the response body
-            let errorBody = 'Unknown error';
-            try {
-                errorBody = await response.text();
-            } catch (e) { /* Ignore inability to read body */ }
-            throw new Error(`API request failed with status ${response.status}: ${errorBody}`);
-        }
-
+        const response = await gemini.generateContent(structuredPrompt, 'gemini-2.5-flash', false);
         const data = await response.json();
 
-        // Basic validation of the received structure
-        if (!data || !data.canvas || !Array.isArray(data.elements)) {
-             console.error("Invalid data structure received from API:", data);
-             throw new Error('Invalid data structure received from the AI.');
+        let rawContent = '';
+        if (data.candidates && data.candidates.length > 0) {
+            rawContent = data.candidates[0].content.parts[0].text;
+        } else {
+            throw new Error("Received empty response from Gemini API.");
         }
-        
-        // Force the correct dimensions in the data
-        data.canvas.width = width;
-        data.canvas.height = height;
 
-        console.log('Received graphic data from API:', data);
-        return data;
+        const jsonMatch = rawContent.match(/```json\s*([\s\S]*?)\s*```/);
+        let graphicJson;
+        if (jsonMatch && jsonMatch[1]) {
+            graphicJson = JSON.parse(jsonMatch[1]);
+        } else {
+            graphicJson = JSON.parse(rawContent);
+        }
+
+        if (!graphicJson || !graphicJson.canvas || !Array.isArray(graphicJson.elements)) {
+            console.error("Invalid data structure received from API:", graphicJson);
+            throw new Error('Invalid data structure received from the AI.');
+        }
+
+        graphicJson.canvas.width = width;
+        graphicJson.canvas.height = height;
+
+        console.log('Received graphic data from API:', graphicJson);
+        return graphicJson;
 
     } catch (error) {
-        console.error('Error calling backend API:', error);
-        // Re-throw the error to be caught by the main.js handler
+        console.error('Error calling Gemini API:', error);
         throw new Error(`Failed to communicate with the generation service. ${error.message}`);
     }
 } 

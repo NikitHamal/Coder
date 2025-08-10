@@ -1465,4 +1465,56 @@ body {
 .diff-del {
     background: #2d1a1a;
     color: #e57373;
-} 
+}
+
+/* Gemini API Key Settings */
+.api-key-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+#gemini-api-key {
+    flex-grow: 1;
+    padding-right: 40px; /* Space for the button */
+    background-color: #333;
+    color: #e0e0e0;
+    border: 1px solid #444;
+    border-radius: 4px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    padding: 6px;
+}
+
+#toggle-api-key-visibility {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 36px;
+    background: transparent;
+    border: none;
+    color: #888;
+    cursor: pointer;
+}
+
+#toggle-api-key-visibility:hover {
+    color: #fff;
+}
+
+.save-btn {
+    width: 100%;
+    padding: 8px;
+    background-color: #007acc;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+.save-btn:hover {
+    background-color: #0069b3;
+}

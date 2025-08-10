@@ -113,6 +113,14 @@
                             <option value="4" selected>4 spaces</option>
                         </select>
                     </div>
+                    <div class="settings-group">
+                        <h4>Gemini API Key</h4>
+                        <div class="api-key-container">
+                            <input type="password" id="gemini-api-key" placeholder="Enter your Gemini API key">
+                            <button id="toggle-api-key-visibility" class="action-btn" title="Toggle visibility"><i class="material-icons">visibility_off</i></button>
+                        </div>
+                        <button id="save-api-key" class="save-btn">Save Key</button>
+                    </div>
                 </div>
             </div>
 
@@ -208,16 +216,9 @@
                             <option value="write">Write</option>
                         </select>
                         <select id="ai-model-select" class="ai-control-select">
-                            <option value="qwen-max-latest">Qwen2.5-Max</option>
-                            <option value="qwen-plus-latest">Qwen2.5-Plus</option>
-                            <option value="qwq-32b">QwQ-32B</option>
-                            <option value="qwen-turbo-latest">Qwen2.5-Turbo</option>
-                            <option value="qwen2.5-omni-7b">Qwen2.5-Omni-7B</option>
-                            <option value="qvq-72b-preview-0310">QVQ-Max</option>
-                            <option value="qwen2.5-vl-32b-instruct">Qwen2.5-VL-32B-Instruct</option>
-                            <option value="qwen2.5-14b-instruct-1m">Qwen2.5-14B-Instruct-1M</option>
-                            <option value="qwen2.5-coder-32b-instruct">Qwen2.5-Coder-32B-Instruct</option>
-                            <option value="qwen2.5-72b-instruct">Qwen2.5-72B-Instruct</option>
+                            <option value="gemini-2.5-flash" title="Free tier, 15 RPM">Gemini 2.5 Flash</option>
+                            <option value="gemini-pro" title="60 RPM">Gemini Pro</option>
+                            <option value="gemini-pro-vision" title="60 RPM">Gemini Pro Vision</option>
                         </select>
                     </div>
                     <button class="send-button"><i class="material-icons">send</i></button>

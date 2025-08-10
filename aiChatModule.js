@@ -1,32 +1,20 @@
-//
 import { fileStorage } from './fileStorage.js';
 import { showPrompt, showConfirm, showAlert } from './modal.js';
-import { gatherContext } from './codebaseContext.js'; // Import the new context gatherer
-// We need marked.js, assuming it's globally available via the script tag in index.html
-// import { marked } from 'https://cdn.jsdelivr.net/npm/marked/marked.min.js'; // Or adjust path if local
-
-// Import agentic action handling
+import { gatherContext } from './codebaseContext.js';
 import { handleAgenticActions, setAgentActionDependencies } from './agentActions.js';
+import { gemini } from './gemini.js';
 
-// Functions to be imported from main.js (via dependency injection)
 let initializeUI, selectFile;
 
 export function setAIChatDependencies(dependencies) {
     initializeUI = dependencies.initializeUI;
     selectFile = dependencies.selectFile;
-    // Pass dependencies down to the agentActions module
-    // We need to pass the internal addMessageToUI function as well
     setAgentActionDependencies({ initializeUI, selectFile, addMessageToUI });
 }
 
+let conversationHistory = [];
+let currentAssistantMessageDiv = null;
 
-// --- AI Chat State ---
-let currentChatId = null;
-let conversationHistory = []; // Stores { role: 'user' | 'assistant', content: '...' }
-let currentAssistantMessageDiv = null; // Reference to the current assistant message UI element
-
-
-// Add message to UI (Internal function for now)
 function addMessageToUI(role, content) {
     const messagesContainer = document.querySelector('.ai-messages-container');
     if (!messagesContainer) return null;
@@ -34,14 +22,13 @@ function addMessageToUI(role, content) {
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('ai-message');
     const paragraph = document.createElement('p');
-    paragraph.textContent = content; // Use textContent for basic user messages
+    paragraph.textContent = content;
 
     if (role === 'user') {
         messageDiv.classList.add('user-message');
         messageDiv.appendChild(paragraph);
     } else {
         messageDiv.classList.add('assistant-message');
-        // Assistant messages will have complex structure added later
         messageDiv.innerHTML = `
             <div class="message-extras">
                 <div class="planning-section" style="display: none;">
@@ -63,33 +50,30 @@ function addMessageToUI(role, content) {
     return messageDiv;
 }
 
-// Update specific parts of an assistant message bubble (Internal)
 function updateAssistantMessageUI(messageDiv, { planning, webResults, finalContent }) {
-     if (!messageDiv || typeof marked === 'undefined') {
-         if (!messageDiv) console.error("updateAssistantMessageUI called with null messageDiv");
-         if (typeof marked === 'undefined') console.error("marked.js is not available");
-         return;
-     }
+    if (!messageDiv || typeof marked === 'undefined') {
+        if (!messageDiv) console.error("updateAssistantMessageUI called with null messageDiv");
+        if (typeof marked === 'undefined') console.error("marked.js is not available");
+        return;
+    }
 
     const planningSection = messageDiv.querySelector('.planning-section');
     const planningContent = messageDiv.querySelector('.planning-content');
     const toggleButton = messageDiv.querySelector('.toggle-planning');
     const webResultsSection = messageDiv.querySelector('.web-search-results');
-    const webResultsList = webResultsSection?.querySelector('ul'); // Add safe navigation
+    const webResultsList = webResultsSection?.querySelector('ul');
     const mainContent = messageDiv.querySelector('.main-message-content');
 
-    // Validate elements before proceeding
     if (!planningSection || !planningContent || !toggleButton || !webResultsSection || !webResultsList || !mainContent) {
         console.error("One or more UI elements missing in assistant message structure.");
         return;
     }
 
-    // Update Planning
     if (planning) {
         planningContent.innerHTML = marked.parse(planning);
         planningSection.style.display = 'block';
-        planningContent.style.display = 'none'; // Always start with planning hidden
-        toggleButton.textContent = 'Show Planning'; // Default to "Show Planning"
+        planningContent.style.display = 'none';
+        toggleButton.textContent = 'Show Planning';
         toggleButton.onclick = () => {
             const isHidden = planningContent.style.display === 'none';
             planningContent.style.display = isHidden ? 'block' : 'none';
@@ -99,9 +83,8 @@ function updateAssistantMessageUI(messageDiv, { planning, webResults, finalConte
         planningSection.style.display = 'none';
     }
 
-    // Update Web Results
     if (webResults && webResults.length > 0) {
-        webResultsList.innerHTML = ''; // Clear previous results
+        webResultsList.innerHTML = '';
         webResults.forEach(result => {
             const li = document.createElement('li');
             li.innerHTML = `<a href="${result.url}" target="_blank" title="${result.snippet || ''}">${result.title || result.url}</a> ${result.date || ''}`;
@@ -112,26 +95,22 @@ function updateAssistantMessageUI(messageDiv, { planning, webResults, finalConte
         webResultsSection.style.display = 'none';
     }
 
-    // Update Main Content
     if (finalContent) {
         try {
             mainContent.innerHTML = marked.parse(finalContent);
         } catch (e) {
-             console.error("Error parsing Markdown:", e);
-             mainContent.textContent = finalContent; // Fallback to text content
+            console.error("Error parsing Markdown:", e);
+            mainContent.textContent = finalContent;
         }
     } else {
-         // Ensure content is cleared if finalContent is null/empty
-         mainContent.innerHTML = '';
+        mainContent.innerHTML = '';
     }
 }
 
-// Handle sending a message to the AI (Internal)
 async function sendChatMessage() {
     const inputElement = document.querySelector('.ai-input');
     const modeSelectElement = document.getElementById('ai-mode-select');
     const modelSelectElement = document.getElementById('ai-model-select');
-    // Get active editor pane to fetch current file content
     const activePane = document.querySelector('.editor-pane.active') || document.querySelector('.editor-pane:first-child');
 
     if (!inputElement || !modeSelectElement || !modelSelectElement) {
@@ -144,8 +123,6 @@ async function sendChatMessage() {
 
     if (!message) return;
 
-    const isWebSearchEnabled = message.includes('@web');
-    const isThinkingEnabled = message.includes('@think');
     const displayMessage = message.replace(/@web|@think/g, '').trim();
     const messageToSend = displayMessage;
 
@@ -156,7 +133,6 @@ async function sendChatMessage() {
     inputElement.value = '';
     currentAssistantMessageDiv = addMessageToUI('assistant', 'Thinking...');
 
-    // --- Gather Context for Write Mode using codebaseContext.js ---
     let workspaceContext = null;
     if (selectedMode === 'write') {
         const activeFilePath = activePane?.dataset.filePath || null;
@@ -169,37 +145,13 @@ async function sendChatMessage() {
                 console.warn(`Could not find code element in active pane for path: ${activeFilePath}`);
             }
         }
-        // Use the new module to gather context
         workspaceContext = gatherContext(activeFilePath, activeFileContent);
     }
-    // --- End Context Gathering ---
 
     try {
-        if (!currentChatId) {
-            const response = await fetch('/api/qwen/new-chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    message: messageToSend,
-                    isWebSearchEnabled: isWebSearchEnabled,
-                    isThinkingEnabled: isThinkingEnabled,
-                    mode: selectedMode,
-                    modelId: selectedModelId,
-                    workspaceContext: workspaceContext // Send context gathered by the module
-                }),
-            });
-            if (!response.ok) throw new Error(`Failed to create new chat: ${await response.text()}`);
-            const chatData = await response.json();
-            currentChatId = chatData.chatId;
-            if (!currentChatId) throw new Error('Backend did not return a chatId.');
-            // Pass workspaceContext and selectedModelId to fetchChatCompletions
-            await fetchChatCompletions(messageToSend, currentChatId, isWebSearchEnabled, isThinkingEnabled, currentAssistantMessageDiv, selectedMode, selectedModelId, workspaceContext);
-        } else {
-             // Pass workspaceContext and selectedModelId to fetchChatCompletions
-            await fetchChatCompletions(messageToSend, currentChatId, isWebSearchEnabled, isThinkingEnabled, currentAssistantMessageDiv, selectedMode, selectedModelId, workspaceContext);
-        }
+        await getGeminiResponse(messageToSend, currentAssistantMessageDiv, selectedMode, selectedModelId, workspaceContext);
     } catch (error) {
-        console.error('Error communicating with AI backend:', error);
+        console.error('Error communicating with Gemini API:', error);
         if (currentAssistantMessageDiv) {
             updateAssistantMessageUI(currentAssistantMessageDiv, { finalContent: `Error: ${error.message}` });
             currentAssistantMessageDiv.classList.add('error-message');
@@ -208,41 +160,28 @@ async function sendChatMessage() {
     }
 }
 
-// Function to handle the streaming chat completion (Internal)
-// Add workspaceContext and modelId parameter here
-async function fetchChatCompletions(message, chatId, isWebSearchEnabled, isThinkingEnabled, assistantMessageDiv, mode, modelId, workspaceContext) {
+async function getGeminiResponse(message, assistantMessageDiv, mode, modelId, workspaceContext) {
     const messagesContainer = document.querySelector('.ai-messages-container');
     if (assistantMessageDiv) {
         const mainContent = assistantMessageDiv.querySelector('.main-message-content');
         if (mainContent) mainContent.textContent = '';
     }
 
-    const response = await fetch('/api/qwen/chat-completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            message: message,
-            chatId: chatId,
-            previousMessages: conversationHistory.slice(0, -1),
-            isWebSearchEnabled: isWebSearchEnabled,
-            isThinkingEnabled: isThinkingEnabled,
-            mode: mode,
-            modelId: modelId,
-            workspaceContext: workspaceContext // Send context gathered earlier
-        }),
-    });
+    let fullPrompt = message;
+    if (mode === 'write' && workspaceContext) {
+        const writeInstructions = `You are in 'write' mode. Analyze the request and the provided context (formatted with Markdown headers: ## File List, ## Active File Path, ## Active File Symbols, ## Active File Content).\nContext:\n---\n${workspaceContext}\n---\nRespond ONLY with a JSON object containing an 'actions' array (objects with 'type', 'path', 'content') and an 'explanation' string. Example: { "actions": [{ "type": "create_file", "path": "new.js", "content": "console.log('hello');" }], "explanation": "Created new.js." }`;
+        fullPrompt = `${writeInstructions}\n\nUser request: ${message}`;
+    }
 
-    if (!response.ok || !response.body) {
-        throw new Error(`Failed to get chat completion: ${response.statusText}`);
+    const response = await gemini.generateContent(fullPrompt, modelId, true);
+
+    if (!response.body) {
+        throw new Error('Streaming response body is null.');
     }
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let fullResponseContent = '';
-    let thinkingContent = '';
-    let webSearchResults = [];
-    let insideThinkTag = false;
-    let jsonBuffer = ''; // Buffer for accumulating JSON data
 
     try {
         while (true) {
@@ -255,172 +194,59 @@ async function fetchChatCompletions(message, chatId, isWebSearchEnabled, isThink
             for (const line of lines) {
                 if (line.startsWith('data:')) {
                     const dataStr = line.substring(5).trim();
-                    if (dataStr === '[DONE]') { reader.cancel(); break; }
-                    if (dataStr === '[ERROR]') {
-                        fullResponseContent += '\n\nError from server.';
-                        if (assistantMessageDiv) assistantMessageDiv.classList.add('error-message');
-                        jsonBuffer = ''; // Clear buffer on error
-                        reader.cancel();
-                        break;
-                    }
-
-                    // Append the data chunk to the buffer
-                    jsonBuffer += dataStr;
-
                     try {
-                        // Try parsing the accumulated buffer
-                        const jsonData = JSON.parse(jsonBuffer);
-
-                        // If parse succeeds, clear the buffer and process the data
-                        jsonBuffer = '';
-
-                        const delta = jsonData?.choices?.[0]?.delta || jsonData?.output?.choices?.[0]?.message;
-                        const functionCall = delta?.function_call;
-                        const functionInfo = delta?.extra?.web_search_info;
-
-                        if (functionCall?.name === 'web_search') { /* Ignore */ }
-                        else if (delta?.role === 'function' && delta?.name === 'web_search' && functionInfo) {
-                            webSearchResults = functionInfo;
-                            updateAssistantMessageUI(assistantMessageDiv, { webResults: webSearchResults });
-                        } else if (delta?.role === 'assistant' && delta?.content) {
-                            const content = delta.content;
-
-                            // Improved think tag handling
-                            if (content.includes('<think>')) {
-                                insideThinkTag = true;
-                                const parts = content.split('<think>');
-                                if (parts[0]) fullResponseContent += parts[0];
-                                if (parts[1]) thinkingContent += parts[1];
-                            }
-                            else if (content.includes('</think>')) {
-                                insideThinkTag = false;
-                                const parts = content.split('</think>');
-                                if (parts[0]) thinkingContent += parts[0];
-                                if (parts[1]) fullResponseContent += parts[1];
-                            }
-                            else if (insideThinkTag) {
-                                thinkingContent += content;
-                            }
-                            else {
-                                fullResponseContent += content;
-                            }
-
-                            updateAssistantMessageUI(assistantMessageDiv, {
-                                planning: thinkingContent ? thinkingContent.trim() : null,
-                                webResults: webSearchResults,
-                                finalContent: fullResponseContent // Display accumulated content
-                            });
+                        const jsonData = JSON.parse(dataStr);
+                        if (jsonData.candidates && jsonData.candidates.length > 0) {
+                            const content = jsonData.candidates[0].content.parts[0].text;
+                            fullResponseContent += content;
+                            updateAssistantMessageUI(assistantMessageDiv, { finalContent: fullResponseContent });
                             if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
                         }
                     } catch (e) {
-                        // Check if the error is specifically an incomplete JSON syntax error
-                        if (e instanceof SyntaxError) {
-                            // Incomplete JSON, wait for more data. Log modestly.
-                            // console.log('Incomplete JSON detected, accumulating...');
-                        } else {
-                            // A different error occurred during parsing or processing
-                            console.error('[fetchChatCompletions] Error processing JSON data:', e, 'Buffer content:', jsonBuffer);
-                            // Clear the buffer to prevent potential infinite loops with malformed data
-                            jsonBuffer = '';
-                        }
+                        // Ignore parsing errors for incomplete JSON
                     }
                 }
             }
-            if (reader.reason) break; // Exit outer loop if cancelled
         }
     } finally {
-        // Ensure stream is properly handled even if errors occur during processing
-         if (!reader.closed) {
+        if (!reader.closed) {
             reader.cancel().catch(e => console.warn("Error cancelling reader:", e));
-         }
+        }
     }
 
     const finalTrimmedContent = fullResponseContent.trim();
     let agenticActions = null;
     let explanation = finalTrimmedContent;
 
-    // --- Debugging Action Execution ---
-    // REMOVED: console.log('[fetchChatCompletions] Mode:', mode);
-    // REMOVED: console.log('[fetchChatCompletions] Final content received:', finalTrimmedContent);
-    // --- End Debugging ---
-
     const jsonFenceStart = '```json\n';
     const jsonFenceEnd = '\n```';
-    let potentialJson = null;
 
     if (mode === 'write' && finalTrimmedContent.startsWith(jsonFenceStart) && finalTrimmedContent.endsWith(jsonFenceEnd)) {
-        // REMOVED: console.log('[fetchChatCompletions] Detected JSON fence wrapper.');
-        potentialJson = finalTrimmedContent.substring(jsonFenceStart.length, finalTrimmedContent.length - jsonFenceEnd.length);
-        // REMOVED: console.log('[fetchChatCompletions] Extracted potential JSON:', potentialJson);
-
-        // REMOVED: console.log('[fetchChatCompletions] Attempting to parse extracted JSON...');
+        const potentialJson = finalTrimmedContent.substring(jsonFenceStart.length, finalTrimmedContent.length - jsonFenceEnd.length);
         try {
             const parsedResponse = JSON.parse(potentialJson);
-            // REMOVED: console.log('[fetchChatCompletions] JSON parsed successfully.');
-
-            // Show the raw JSON block to the user for transparency
-            const debugContent = "```json\n" + JSON.stringify(parsedResponse, null, 2) + "\n```\n\n";
-
             if (parsedResponse && Array.isArray(parsedResponse.actions) && typeof parsedResponse.explanation === 'string') {
                 agenticActions = parsedResponse.actions;
                 explanation = parsedResponse.explanation;
-                // REMOVED: console.log('[fetchChatCompletions] Successfully parsed actions. agenticActions set.');
             } else {
-                explanation = debugContent + "⚠️ Error: The response format does not match expected structure. Please try again.";
-                console.warn('[fetchChatCompletions] Parsed JSON structure mismatch.');
+                explanation = "⚠️ Error: The response format does not match expected structure. Please try again.";
             }
         } catch (e) {
-            // Keep the raw content display in case of parsing errors
             explanation = "⚠️ Error: Could not parse the AI response as valid JSON. Please try again.\nRaw content was:\n" + finalTrimmedContent;
-            console.error('[fetchChatCompletions] JSON parsing error:', e);
-            potentialJson = null; // Ensure parsing failure doesn't proceed
-        }
-    } else {
-        // REMOVED: console.log('[fetchChatCompletions] Did not detect JSON fence wrapper or not in write mode.');
-        // If not wrapped, but still might be JSON (though less likely now)
-        if (mode === 'write' && finalTrimmedContent.startsWith('{') && finalTrimmedContent.endsWith('}')) {
-            console.warn('[fetchChatCompletions] Content looked like JSON but was not wrapped in fences. Attempting parse anyway.')
-            potentialJson = finalTrimmedContent;
-            try {
-                 const parsedResponse = JSON.parse(potentialJson);
-                 // Simplified handling if direct JSON is ever sent
-                 if (parsedResponse && Array.isArray(parsedResponse.actions) && typeof parsedResponse.explanation === 'string') {
-                     agenticActions = parsedResponse.actions;
-                     // Use only the explanation, hide the raw JSON
-                     explanation = parsedResponse.explanation;
-                     // REMOVED: console.log('[fetchChatCompletions] Successfully parsed UNWRAPPED actions.');
-                 } else {
-                      explanation = "⚠️ Warning: Received unwrapped JSON with unexpected structure.";
-                 }
-            } catch (e) {
-                 explanation = "⚠️ Error: Failed to parse unwrapped JSON-like content.";
-                 console.error('[fetchChatCompletions] Error parsing unwrapped JSON:', e);
-            }
         }
     }
 
     updateAssistantMessageUI(assistantMessageDiv, {
-        planning: thinkingContent ? thinkingContent.trim() : null,
-        webResults: webSearchResults,
         finalContent: explanation
     });
 
-    // --- Debugging Action Execution ---
-    // REMOVED: console.log('[fetchChatCompletions] Value of agenticActions before final check:', agenticActions);
-    // --- End Debugging ---
-
     if (agenticActions) {
-        // REMOVED: console.log('[fetchChatCompletions] agenticActions is valid. Calling handleAgenticActions...');
         try {
-            // Call the imported handler
             await handleAgenticActions(agenticActions);
         } catch (error) {
             console.error("Error executing agentic actions:", error);
-            // Use the internal addMessageToUI for errors originating here
             addMessageToUI('assistant', `Error executing actions: ${error.message}`);
         }
-    } else {
-         // REMOVED: console.log('[fetchChatCompletions] agenticActions is null or invalid. Skipping handleAgenticActions call.');
     }
 
     if (explanation) {
@@ -429,9 +255,7 @@ async function fetchChatCompletions(message, chatId, isWebSearchEnabled, isThink
     currentAssistantMessageDiv = null;
 }
 
-// Add this helper function to add basic styles to your AI chat
 function addAIChatStyles() {
-    // Create style element if it doesn't exist
     let styleEl = document.getElementById('ai-chat-styles');
     if (!styleEl) {
         styleEl = document.createElement('style');
@@ -439,7 +263,6 @@ function addAIChatStyles() {
         document.head.appendChild(styleEl);
     }
 
-    // Add styles
     styleEl.textContent = `
         .planning-section {
             background-color: #1e1e1e;
@@ -477,12 +300,10 @@ function addAIChatStyles() {
     `;
 }
 
-// Setup AI event listeners (Exported)
 export function setupAIChatEventListeners() {
     const sendButton = document.querySelector('.send-button');
     const inputElement = document.querySelector('.ai-input');
 
-    // Add chat styles
     addAIChatStyles();
 
     if (sendButton && inputElement) {
@@ -500,12 +321,10 @@ export function setupAIChatEventListeners() {
 export function addDiffToUI(filePath, oldContent, newContent, onApprove, onReject) {
     const messagesContainer = document.querySelector('.ai-messages-container');
     if (!messagesContainer) return;
-    
-    // Create a diff message
+
     const diffMessage = document.createElement('div');
     diffMessage.className = 'ai-message assistant-message';
-    
-    // Build the diff view
+
     let diffHtml = `<div class="diff-view">
         <div class="diff-header">
             <span class="diff-filename"><i class="material-icons" style="font-size:16px;vertical-align:middle;">description</i> ${filePath}</span>
@@ -515,7 +334,7 @@ export function addDiffToUI(filePath, oldContent, newContent, onApprove, onRejec
             </div>
         </div>
         <pre class="diff-content">`;
-    
+
     if (oldContent === newContent) {
         diffHtml += '<span style="color: #4caf50">No changes</span>';
     } else {
@@ -533,19 +352,18 @@ export function addDiffToUI(filePath, oldContent, newContent, onApprove, onRejec
             }
         }
     }
-    
+
     diffHtml += `</pre></div>`;
-    
+
     diffMessage.innerHTML = diffHtml;
     messagesContainer.appendChild(diffMessage);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    
-    // Add event listeners
+
     diffMessage.querySelector('.diff-approve').addEventListener('click', () => {
         if (onApprove) onApprove();
         diffMessage.querySelector('.diff-actions').innerHTML = '<span style="color: #81c784"><i class="material-icons">check_circle</i> Changes approved</span>';
     });
-    
+
     diffMessage.querySelector('.diff-reject').addEventListener('click', () => {
         if (onReject) onReject();
         diffMessage.querySelector('.diff-actions').innerHTML = '<span style="color: #e57373"><i class="material-icons">cancel</i> Changes discarded</span>';
@@ -556,17 +374,16 @@ function escapeHtml(str) {
     return str.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 }
 
-// Add this function after addDiffToUI
 export function addFileOperationMessage(message, isSuccess = true) {
     const messagesContainer = document.querySelector('.ai-messages-container');
     if (!messagesContainer) return;
-    
+
     const messageDiv = document.createElement('div');
     messageDiv.className = 'ai-message assistant-message';
-    
+
     const icon = isSuccess ? '✅' : '❌';
     messageDiv.innerHTML = `<p class="file-op-message ${isSuccess ? 'success' : 'error'}">${icon} ${message}</p>`;
-    
+
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 } 
