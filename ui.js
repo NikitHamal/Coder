@@ -481,10 +481,14 @@ export function loadSettingsToPanel() {
     const savedTheme = localStorage.getItem('editorTheme') || 'atom-one-dark';
     const savedFontSize = localStorage.getItem('editorFontSize') || '14';
     const savedTabSize = localStorage.getItem('editorTabSize') || '4';
+    const savedApiKey = localStorage.getItem('gemini-api-key') || '';
 
     if (themeSelector) themeSelector.value = savedTheme;
     if (fontSizeSelector) fontSizeSelector.value = savedFontSize;
     if (tabSizeSelector) tabSizeSelector.value = savedTabSize;
+    if (document.getElementById('gemini-api-key')) {
+        document.getElementById('gemini-api-key').value = savedApiKey;
+    }
 }
 
 // Apply initial font size from localStorage
@@ -617,6 +621,36 @@ export function setupUIEventListeners() {
 
     // --- End Action Button Listeners ---
 
+    // Gemini API Key Settings
+    const saveApiKeyBtn = document.getElementById('save-api-key');
+    const apiKeyInput = document.getElementById('gemini-api-key');
+    const toggleApiKeyVisibilityBtn = document.getElementById('toggle-api-key-visibility');
+
+    saveApiKeyBtn?.addEventListener('click', () => {
+        const apiKey = apiKeyInput.value.trim();
+        if (apiKey) {
+            localStorage.setItem('gemini-api-key', apiKey);
+            showAlert('API Key Saved', 'Your Gemini API key has been saved locally.');
+            // Reload the Gemini module to use the new key
+            import('../gemini.js').then(module => {
+                module.gemini.apiKey = apiKey;
+            });
+        } else {
+            showAlert('API Key Cleared', 'Your Gemini API key has been cleared.', 'warning');
+            localStorage.removeItem('gemini-api-key');
+        }
+    });
+
+    toggleApiKeyVisibilityBtn?.addEventListener('click', () => {
+        const icon = toggleApiKeyVisibilityBtn.querySelector('i');
+        if (apiKeyInput.type === 'password') {
+            apiKeyInput.type = 'text';
+            icon.textContent = 'visibility';
+        } else {
+            apiKeyInput.type = 'password';
+            icon.textContent = 'visibility_off';
+        }
+    });
 }
 
 const linterPanel = document.getElementById('linter-panel');
