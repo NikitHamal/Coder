@@ -59,48 +59,48 @@ export async function handleAgenticActions(actions) {
             switch (action.type) {
                 case 'create_file':
                     if (!action.path || typeof action.content !== 'string') throw new Error('Missing path or content for file operation');
-                    result = fileOps.createFile(action.path, action.content);
+                    result = await fileOps.createFile(action.path, action.content);
                     if (result.success) { lastAffectedPath = action.path; actionsExecuted++; }
                     break;
                 case 'modify_file':
                 case 'update_file':
                     if (!action.path || typeof action.content !== 'string') throw new Error('Missing path or content for file operation');
-                    result = fileOps.modifyFile(action.path, action.content);
+                    result = await fileOps.modifyFile(action.path, action.content);
                     if (result.success) { lastAffectedPath = action.path; actionsExecuted++; }
                     break;
                 case 'create_folder':
                     if (!action.path) throw new Error('Missing path for folder operation');
-                    result = fileOps.createFolder(action.path);
+                    result = await fileOps.createFolder(action.path);
                     if (result.success) { lastAffectedPath = action.path; actionsExecuted++; }
                     break;
                 case 'delete_file':
                     if (!action.path) throw new Error('Missing path for delete operation');
-                    result = fileOps.deleteFile(action.path);
+                    result = await fileOps.deleteFile(action.path);
                     // Also try to delete folder marker if it exists
-                    fileOps.deleteFolder(action.path);
+                    await fileOps.deleteFolder(action.path);
                     if (result.success) { actionsExecuted++; }
                     break;
                 case 'rename_file':
                     if (!action.path || !action.new_path) throw new Error('Missing source or destination path for rename operation');
-                    result = fileOps.renameFile(action.path, action.new_path);
+                    result = await fileOps.renameFile(action.path, action.new_path);
                     // Try folder marker rename if file rename fails
                     if (!result.success) {
-                        result = fileOps.renameFile(action.path + '.folder', action.new_path + '.folder');
+                        result = await fileOps.renameFile(action.path + '.folder', action.new_path + '.folder');
                     }
                     if (result.success) { lastAffectedPath = action.new_path; actionsExecuted++; }
                     break;
                 case 'move_file':
                     if (!action.path || !action.new_path) throw new Error('Missing source or destination path for move operation');
-                    result = fileOps.moveFile(action.path, action.new_path);
+                    result = await fileOps.moveFile(action.path, action.new_path);
                     // Try folder marker move if file move fails
                     if (!result.success) {
-                        result = fileOps.moveFile(action.path + '.folder', action.new_path + '.folder');
+                        result = await fileOps.moveFile(action.path + '.folder', action.new_path + '.folder');
                     }
                     if (result.success) { lastAffectedPath = action.new_path; actionsExecuted++; }
                     break;
                 case 'copy_file':
                     if (!action.path || !action.new_path) throw new Error('Missing source or destination path for copy operation');
-                    result = fileOps.copyFile(action.path, action.new_path);
+                    result = await fileOps.copyFile(action.path, action.new_path);
                     if (result.success) { lastAffectedPath = action.new_path; actionsExecuted++; }
                     break;
                 default:

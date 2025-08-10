@@ -98,15 +98,23 @@ function updateLineNumbersForPane(pane, lineNumbersElement, codeElement) {
     // Line count is number of splits, ensure at least 1 for empty file
     const lineCount = lines.length > 0 ? lines.length : 1;
 
-    // Generate line number divs
-    let lineNumbersHTML = '';
+    // Generate line number fragments efficiently to avoid large innerHTML overhead
+    const frag = document.createDocumentFragment();
     for (let i = 1; i <= lineCount; i++) {
-        lineNumbersHTML += `<div>${i}</div>`;
+        const div = document.createElement('div');
+        div.textContent = String(i);
+        frag.appendChild(div);
     }
+    lineNumbersElement.innerHTML = '';
+    lineNumbersElement.appendChild(frag);
 
-    lineNumbersElement.innerHTML = lineNumbersHTML;
-
-    // Optional: Sync scrolling between line numbers and code (more complex)
+    // Sync scroll positions
+    const editorPre = codeElement.closest('pre');
+    if (editorPre) {
+        editorPre.addEventListener('scroll', () => {
+            lineNumbersElement.scrollTop = editorPre.scrollTop;
+        });
+    }
 }
 
 

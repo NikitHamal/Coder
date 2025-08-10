@@ -416,7 +416,7 @@ body {
 /* Editor styles */
 .editor {
     height: 100%;
-    overflow: auto;
+    overflow: hidden; /* let the pre scroll; sync line numbers via JS */
     padding: 0;
     background-color: #282c34;
     display: flex;
@@ -428,10 +428,11 @@ body {
     font-size: 13px;
     line-height: 1.4;
     margin: 0;
-    padding: 14px 16px 14px 0;
+    padding: 14px 0 14px 0;
     outline: none;
     flex-grow: 1;
     counter-reset: line;
+    overflow: auto; /* vertical scroll lives here */
 }
 
 .editor pre code {
@@ -440,7 +441,7 @@ body {
     white-space: pre;
     width: 100%;
     min-height: calc(100vh - 73px);
-    padding-left: 16px;
+    padding: 0 16px 0 16px; /* symmetric padding for better alignment */
 }
 
 .line-numbers {
@@ -453,7 +454,7 @@ body {
     min-width: 35px;
     user-select: none;
     background-color: #21252b;
-    overflow: hidden;
+    overflow: hidden; /* scrolling synced via JS */
 }
 
 /* Override highlight.js default background */
@@ -913,12 +914,11 @@ body {
 
 @media (max-width: 768px) {
     .app-container {
-        grid-template-columns: 60px 1fr;
+        grid-template-columns: 1fr;
     }
 
-    .ai-sidebar {
-        display: none;
-    }
+    .ai-sidebar { display: none; }
+    .files-sidebar { display: none; }
     
     .files-sidebar .sidebar-header h1 {
         display: none;
@@ -934,9 +934,7 @@ body {
     .app-container {
         grid-template-columns: 1fr;
     }
-    .files-sidebar {
-        display: none;
-    }
+    .files-sidebar { display: none; }
 }
 
 /* Custom Modal Dialog */

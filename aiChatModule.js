@@ -120,6 +120,11 @@ async function sendChatMessage() {
     let message = inputElement.value.trim();
     const selectedMode = modeSelectElement.value;
     const selectedModelId = modelSelectElement.value;
+    // Persist preferences
+    try {
+        localStorage.setItem('coder_ai_mode', selectedMode);
+        localStorage.setItem('coder_ai_model', selectedModelId);
+    } catch (e) { /* no-op */ }
 
     if (!message) return;
 
@@ -167,6 +172,16 @@ async function getGeminiResponse(message, assistantMessageDiv, mode, modelId, wo
         if (mainContent) mainContent.textContent = '';
     }
 
+    // Prefer function calling workflow in write mode
+    if (mode === 'write') {
+        try {
+            await handleWriteModeWithFunctionCalling({ message, assistantMessageDiv, modelId, workspaceContext, messagesContainer });
+            return;
+        } catch (e) {
+            console.warn('Function calling failed, falling back to JSON instructions. Error:', e);
+        }
+    }
+
     let fullPrompt = message;
     if (mode === 'write' && workspaceContext) {
         const writeInstructions = `You are in 'write' mode. Analyze the request and the provided context (formatted with Markdown headers: ## File List, ## Active File Path, ## Active File Symbols, ## Active File Content).\nContext:\n---\n${workspaceContext}\n---\nRespond ONLY with a JSON object containing an 'actions' array (objects with 'type', 'path', 'content') and an 'explanation' string. Example: { "actions": [{ "type": "create_file", "path": "new.js", "content": "console.log('hello');" }], "explanation": "Created new.js." }`;
@@ -191,11 +206,7 @@ async function getGeminiResponse(message, assistantMessageDiv, mode, modelId, wo
 
             buffer += decoder.decode(value, { stream: true });
 
-            // The Gemini API stream sometimes sends multiple JSON objects in one chunk, separated by commas.
-            // We need to handle this by trying to parse the buffer as a whole, and if that fails,
-            // we assume it's a stream of JSON objects.
-
-            // First, let's try to parse the whole buffer as a single JSON array
+            // Try parse the whole buffer as a single JSON array
             try {
                 const jsonArray = JSON.parse(buffer);
                 fullResponseContent = jsonArray.map(item => item.candidates[0].content.parts[0].text).join('');
@@ -203,7 +214,7 @@ async function getGeminiResponse(message, assistantMessageDiv, mode, modelId, wo
                 if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 continue; // Move to the next chunk
             } catch (e) {
-                // It's not a single JSON array, so let's try to parse it as a stream of objects.
+                // Fallback to parse as event stream lines
             }
 
             const lines = buffer.split('\n');
@@ -281,6 +292,128 @@ async function getGeminiResponse(message, assistantMessageDiv, mode, modelId, wo
         conversationHistory.push({ role: 'assistant', content: explanation });
     }
     currentAssistantMessageDiv = null;
+}
+
+// --- Function calling powered Write mode ---
+async function handleWriteModeWithFunctionCalling({ message, assistantMessageDiv, modelId, workspaceContext, messagesContainer }) {
+    const functionDeclarations = [
+        {
+            name: 'create_file',
+            description: 'Create a new file at path with initial content',
+            parameters: {
+                type: 'OBJECT',
+                properties: {
+                    path: { type: 'STRING', description: 'Path including file name' },
+                    content: { type: 'STRING', description: 'File contents' }
+                },
+                required: ['path', 'content']
+            }
+        },
+        {
+            name: 'modify_file',
+            description: 'Replace the entire content of an existing file',
+            parameters: {
+                type: 'OBJECT',
+                properties: {
+                    path: { type: 'STRING' },
+                    content: { type: 'STRING' }
+                },
+                required: ['path', 'content']
+            }
+        },
+        {
+            name: 'create_folder',
+            description: 'Create a folder (virtual) at the given path',
+            parameters: {
+                type: 'OBJECT',
+                properties: { path: { type: 'STRING' } },
+                required: ['path']
+            }
+        },
+        {
+            name: 'delete_file',
+            description: 'Delete a file at path',
+            parameters: {
+                type: 'OBJECT',
+                properties: { path: { type: 'STRING' } },
+                required: ['path']
+            }
+        },
+        {
+            name: 'rename_file',
+            description: 'Rename or move a file from path to new_path',
+            parameters: {
+                type: 'OBJECT',
+                properties: { path: { type: 'STRING' }, new_path: { type: 'STRING' } },
+                required: ['path', 'new_path']
+            }
+        },
+        {
+            name: 'copy_file',
+            description: 'Copy a file from path to new_path',
+            parameters: {
+                type: 'OBJECT',
+                properties: { path: { type: 'STRING' }, new_path: { type: 'STRING' } },
+                required: ['path', 'new_path']
+            }
+        }
+    ];
+
+    const systemPreamble = `You are an autonomous coding agent with direct file access tools. Prefer calling the provided functions to make changes. Provide concise rationale as plain text also.`;
+    const userContent = `User request: ${message}\n\nWorkspace Context:\n${workspaceContext || '[No context]'}`;
+
+    const contents = [
+        { role: 'user', parts: [{ text: systemPreamble + '\n\n' + userContent }] }
+    ];
+
+    const res = await gemini.generateWithTools({ contents, tools: functionDeclarations, model: modelId, streaming: false });
+
+    let explanationText = '';
+    const actions = [];
+    try {
+        const candidate = res.candidates?.[0];
+        const parts = candidate?.content?.parts || [];
+        for (const part of parts) {
+            if (part.text) explanationText += part.text;
+            const fc = part.functionCall || part.function_call; // handle variants
+            if (fc && fc.name) {
+                let args = {};
+                try { args = typeof fc.args === 'string' ? JSON.parse(fc.args) : (fc.args || {}); } catch {}
+                const action = mapFunctionCallToAction(fc.name, args);
+                if (action) actions.push(action);
+            }
+        }
+    } catch (e) {
+        console.warn('Failed to parse function call response', e);
+    }
+
+    if (assistantMessageDiv) {
+        updateAssistantMessageUI(assistantMessageDiv, { finalContent: explanationText || 'Applying changes...' });
+        if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    if (actions.length > 0) {
+        await handleAgenticActions(actions);
+    }
+}
+
+function mapFunctionCallToAction(name, args) {
+    switch (name) {
+        case 'create_file':
+            return { type: 'create_file', path: args.path, content: String(args.content || '') };
+        case 'modify_file':
+            return { type: 'modify_file', path: args.path, content: String(args.content || '') };
+        case 'create_folder':
+            return { type: 'create_folder', path: args.path };
+        case 'delete_file':
+            return { type: 'delete_file', path: args.path };
+        case 'rename_file':
+            return { type: 'rename_file', path: args.path, new_path: args.new_path };
+        case 'copy_file':
+            return { type: 'copy_file', path: args.path, new_path: args.new_path };
+        default:
+            return null;
+    }
 }
 
 function addAIChatStyles() {

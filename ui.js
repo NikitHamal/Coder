@@ -30,6 +30,8 @@ const closeSettingsBtn = document.querySelector('.close-settings');
 const themeSelector = document.getElementById('theme-selector');
 const fontSizeSelector = document.getElementById('font-size');
 const tabSizeSelector = document.getElementById('tab-size');
+const aiModeSelectEl = document.getElementById('ai-mode-select');
+const aiModelSelectEl = document.getElementById('ai-model-select');
 const fileTypeStatus = document.querySelector('.file-type');
 const fileSizeStatus = document.querySelector('.file-size');
 const tabSizeStatus = document.querySelector('.tab-size'); // Status bar display
@@ -478,10 +480,12 @@ export function setupSettingsPanelUI() {
 
 // Load settings from localStorage and apply them to the UI controls in the panel
 export function loadSettingsToPanel() {
-    const savedTheme = localStorage.getItem('editorTheme') || 'atom-one-dark';
+    const savedTheme = localStorage.getItem('coder_theme') || localStorage.getItem('editorTheme') || 'atom-one-dark';
     const savedFontSize = localStorage.getItem('editorFontSize') || '14';
     const savedTabSize = localStorage.getItem('editorTabSize') || '4';
     const savedApiKey = localStorage.getItem('gemini-api-key') || '';
+    const savedAiMode = localStorage.getItem('coder_ai_mode') || 'ask';
+    const savedAiModel = localStorage.getItem('coder_ai_model') || 'gemini-2.5-flash';
 
     if (themeSelector) themeSelector.value = savedTheme;
     if (fontSizeSelector) fontSizeSelector.value = savedFontSize;
@@ -489,6 +493,8 @@ export function loadSettingsToPanel() {
     if (document.getElementById('gemini-api-key')) {
         document.getElementById('gemini-api-key').value = savedApiKey;
     }
+    if (aiModeSelectEl) aiModeSelectEl.value = savedAiMode;
+    if (aiModelSelectEl) aiModelSelectEl.value = savedAiModel;
 }
 
 // Apply initial font size from localStorage
@@ -543,6 +549,7 @@ export function setupUIEventListeners() {
         const newTheme = e.target.value;
         if (updateTheme) updateTheme(newTheme);
         localStorage.setItem('editorTheme', newTheme);
+        localStorage.setItem('coder_theme', newTheme);
          // Maybe close settings panel after selection?
          // settingsPanel.style.display = 'none';
     });
@@ -570,6 +577,14 @@ export function setupUIEventListeners() {
          }
         localStorage.setItem('editorTabSize', newSize);
          applyInitialTabSize(); // Re-apply to ensure consistency if needed
+    });
+
+    // Persist AI mode/model
+    aiModeSelectEl?.addEventListener('change', (e) => {
+        localStorage.setItem('coder_ai_mode', e.target.value);
+    });
+    aiModelSelectEl?.addEventListener('change', (e) => {
+        localStorage.setItem('coder_ai_model', e.target.value);
     });
 
     // --- Action Button Listeners ---
