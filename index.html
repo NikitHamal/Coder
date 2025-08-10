@@ -3,329 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coder - Modern Coding Environment</title>
+    <title>Coder Gemini - Modern Coding Environment</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- Theme Stylesheets -->
-    <link id="theme-stylesheet" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-    <!-- Link light theme CSS - it will be activated by a body class -->
-    <link rel="stylesheet" href="light-theme.css">
-    <!-- Marked.js for Markdown Parsing -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Monaco Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
 </head>
 <body>
     <div class="app-container">
         <!-- Left sidebar - Files -->
         <div class="sidebar files-sidebar">
             <div class="sidebar-header logo">
-                <h1>Coder</h1>
+                <h1>Coder Gemini</h1>
             </div>
             <div class="section-header">
                 <div class="section-label">
                     <h3>Files</h3>
                 </div>
-                <button class="add-file-btn"><i class="material-icons">add</i></button>
+                <button class="add-file-btn" id="new-file-btn"><i class="material-icons">add</i></button>
             </div>
             <div class="file-list">
                 <div class="file-item active">
+                    <span>main.js</span>
+                </div>
+                <div class="file-item">
                     <span>index.html</span>
                 </div>
                 <div class="file-item">
                     <span>styles.css</span>
-                </div>
-                <div class="file-item">
-                    <span>script.js</span>
                 </div>
             </div>
         </div>
 
         <!-- Main content area -->
         <div class="main-content">
-            <!-- Tabs and actions -->
+            <!-- Top toolbar -->
             <div class="top-bar">
-                <div class="tabs-container">
-                    <!-- Dynamic tabs will be added here by JavaScript -->
+                <div class="toolbar-left">
+                    <button class="toolbar-btn" id="open-file-btn" title="Open File (Ctrl+O)">
+                        <i class="material-icons">folder_open</i>
+                    </button>
+                    <button class="toolbar-btn" id="save-file-btn" title="Save File (Ctrl+S)">
+                        <i class="material-icons">save</i>
+                    </button>
                 </div>
-                <div class="actions-container">
-                    <button class="action-btn search-btn" title="Search (Ctrl+F)"><i class="material-icons">search</i></button>
-                    <button class="action-btn download-btn" title="Download Current File"><i class="material-icons">download</i></button>
-                    <button class="action-btn terminal-btn" title="Terminal"><i class="material-icons">terminal</i></button>
-                    <button class="action-btn split-btn" title="Split Editor"><i class="material-icons">vertical_split</i></button>
-                    <button class="action-btn settings-btn" title="Settings"><i class="material-icons">settings</i></button>
-                </div>
-            </div>
-
-            <!-- Search panel (hidden by default) -->
-            <div class="search-panel" style="display: none;">
-                <div class="search-header">
-                    <div class="search-inputs">
-                        <div class="search-input-container">
-                            <i class="material-icons search-icon">search</i>
-                            <input type="text" class="search-input" placeholder="Search...">
-                        </div>
-                        <div class="search-input-container">
-                            <i class="material-icons search-icon">find_replace</i>
-                            <input type="text" class="replace-input" placeholder="Replace...">
-                        </div>
-                    </div>
-                    <div class="search-buttons">
-                        <button class="search-next" title="Find Next"><i class="material-icons">arrow_downward</i></button>
-                        <button class="search-prev" title="Find Previous"><i class="material-icons">arrow_upward</i></button>
-                        <button class="search-replace" title="Replace"><i class="material-icons">published_with_changes</i></button>
-                        <button class="search-replace-all" title="Replace All"><i class="material-icons">all_inclusive</i></button>
-                        <button class="close-search" title="Close"><i class="material-icons">close</i></button>
-                    </div>
+                <div class="toolbar-right">
+                    <button class="toolbar-btn" id="settings-button" title="Settings">
+                        <i class="material-icons">settings</i>
+                    </button>
                 </div>
             </div>
 
-            <!-- Settings panel (hidden by default) -->
-            <div class="settings-panel" style="display: none;">
-                <div class="settings-header">
-                    <h3>Settings</h3>
-                    <button class="close-settings"><i class="material-icons">close</i></button>
-                </div>
-                <div class="settings-content">
-                    <div class="settings-group">
-                        <h4>Theme</h4>
-                        <select id="theme-selector">
-                            <option value="atom-one-dark">Atom One Dark</option>
-                            <option value="github">GitHub Light</option>
-                            <option value="dracula">Dracula</option>
-                            <option value="monokai">Monokai</option>
-                            <option value="coder-light">Coder Light</option>
-                        </select>
-                    </div>
-                    <div class="settings-group">
-                        <h4>Font Size</h4>
-                        <select id="font-size">
-                            <option value="12">12px</option>
-                            <option value="14" selected>14px</option>
-                            <option value="16">16px</option>
-                            <option value="18">18px</option>
-                        </select>
-                    </div>
-                    <div class="settings-group">
-                        <h4>Tab Size</h4>
-                        <select id="tab-size">
-                            <option value="2">2 spaces</option>
-                            <option value="4" selected>4 spaces</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Preview button container -->
-            <div class="preview-container">
-                <button class="preview-button"><i class="material-icons">visibility</i> Preview</button>
-            </div>
-
-            <!-- Editor container with split view support -->
+            <!-- Editor container -->
             <div class="editor-container">
-                <!-- First editor pane -->
-                <div class="editor-pane active">
-                    <div class="editor">
-                        <div class="line-numbers"></div>
-                        <pre><code contenteditable="true" spellcheck="false"><!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coder - Modern Coding Environment</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <!-- Your code here -->
-</body>
-</html></code></pre>
-                    </div>
-                </div>
-                
-                <!-- Second editor pane (hidden by default) -->
-                <div class="editor-pane" style="display: none;">
-                    <div class="editor">
-                        <div class="line-numbers"></div>
-                        <pre><code contenteditable="true" spellcheck="false"></code></pre>
-                    </div>
-                </div>
+                <div id="editor"></div>
             </div>
             
             <!-- Status bar -->
-            <div class="status-bar">
-                <div class="status-left">
-                    <div class="status-item">
-                        <i class="material-icons">code</i>
-                        <span class="file-type">HTML</span>
-                    </div>
-                    <div class="status-item">
-                        <i class="material-icons">storage</i>
-                        <span class="file-size">0.3 KB</span>
-                    </div>
-                </div>
-                <div class="status-right">
-                    <div class="status-item">
-                        <span class="cursor-position">Ln 1, Col 1</span>
-                    </div>
-                    <div class="status-item">
-                        <i class="material-icons">format_indent_increase</i>
-                        <span class="tab-size">Spaces: 4</span>
-                    </div>
-                    <div class="status-item">
-                        <i class="material-icons">auto_fix_high</i>
-                        <span class="lint-status" style="cursor:pointer">0 Problems</span>
-                    </div>
-                </div>
-            </div>
-            <!-- Linter panel (hidden by default) -->
-            <div id="linter-panel" style="display:none;">
-                <div class="linter-header">
-                    <span>Linter Problems</span>
-                    <button id="linter-fix-btn" style="display:none;">Fix All</button>
-                    <button id="linter-close-btn">&times;</button>
-                </div>
-                <ul id="linter-list"></ul>
+            <div id="status-bar" class="status-bar">
+                <span>Ready</span>
             </div>
         </div>
 
-        <!-- Right sidebar - AI -->
+        <!-- Right sidebar - AI Chat -->
         <div class="sidebar ai-sidebar">
             <div class="sidebar-header">
-                <h2>AI Assistant</h2>
+                <h2>Gemini AI Assistant</h2>
+                <div class="ai-controls">
+                    <button id="chat-mode-toggle" class="chat-mode-toggle ask" title="Switch to Write Mode">
+                        Ask Mode
+                    </button>
+                </div>
             </div>
+            
             <div class="ai-content">
-                <div class="ai-messages-container"> 
-                    <!-- Chat messages will be appended here -->
-                    <div class="ai-message assistant-message">
-                        <p>How can I help you with your code today?</p>
+                <div class="model-selector">
+                    <select id="model-select" class="model-select">
+                        <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Experimental)</option>
+                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                        <option value="gemini-2.0-pro">Gemini 2.0 Pro</option>
+                        <option value="gemini-2.0-pro-latest">Gemini 2.0 Pro (Latest)</option>
+                        <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                        <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash (Latest)</option>
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                        <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro (Latest)</option>
+                        <option value="gemini-1.0-pro">Gemini 1.0 Pro</option>
+                        <option value="gemini-1.0-pro-vision">Gemini 1.0 Pro Vision</option>
+                    </select>
+                </div>
+                
+                <div id="chat-container" class="chat-container">
+                    <div class="chat-message assistant">
+                        <div class="message-role">Gemini AI</div>
+                        <div class="message-content">
+                            👋 Welcome to Coder Gemini! I'm your AI coding assistant. 
+                            <br><br>
+                            <strong>Ask Mode:</strong> Ask me questions about coding, get explanations, or discuss ideas.
+                            <br><br>
+                            <strong>Write Mode:</strong> I'll analyze your workspace and help you write or modify code.
+                            <br><br>
+                            Please set your Gemini API key in settings to get started!
+                        </div>
                     </div>
                 </div>
-                <div class="ai-input-container">
-                    <input type="text" class="ai-input" placeholder="Ask anything...">
-                    <div class="ai-input-controls">
-                        <select id="ai-mode-select" class="ai-control-select">
-                            <option value="ask">Ask</option>
-                            <option value="write">Write</option>
-                        </select>
-                        <select id="ai-model-select" class="ai-control-select">
-                            <option value="qwen-max-latest">Qwen2.5-Max</option>
-                            <option value="qwen-plus-latest">Qwen2.5-Plus</option>
-                            <option value="qwq-32b">QwQ-32B</option>
-                            <option value="qwen-turbo-latest">Qwen2.5-Turbo</option>
-                            <option value="qwen2.5-omni-7b">Qwen2.5-Omni-7B</option>
-                            <option value="qvq-72b-preview-0310">QVQ-Max</option>
-                            <option value="qwen2.5-vl-32b-instruct">Qwen2.5-VL-32B-Instruct</option>
-                            <option value="qwen2.5-14b-instruct-1m">Qwen2.5-14B-Instruct-1M</option>
-                            <option value="qwen2.5-coder-32b-instruct">Qwen2.5-Coder-32B-Instruct</option>
-                            <option value="qwen2.5-72b-instruct">Qwen2.5-72B-Instruct</option>
-                        </select>
-                    </div>
-                    <button class="send-button"><i class="material-icons">send</i></button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Terminal panel (hidden by default) -->
-        <div class="terminal-panel" style="display: none;">
-            <div class="terminal-header">
-                <h3>Terminal</h3>
-                <div class="terminal-actions">
-                    <button class="terminal-clear" title="Clear Terminal"><i class="material-icons">clear_all</i></button>
-                    <button class="close-terminal" title="Close Terminal"><i class="material-icons">close</i></button>
-                </div>
-            </div>
-            <div class="terminal-content">
-                <div class="terminal-output">
-                    <div class="terminal-line">Welcome to Coder Terminal v1.0</div>
-                    <div class="terminal-line">Type 'help' for available commands</div>
-                </div>
-                <div class="terminal-input-container">
-                    <span class="terminal-prompt">$</span>
-                    <input type="text" class="terminal-input" autofocus>
-                </div>
-            </div>
-        </div>
-
-        <!-- Keyboard shortcut panel (hidden by default) -->
-        <div class="shortcuts-panel" style="display: none;">
-            <div class="shortcuts-header">
-                <h3>Keyboard Shortcuts</h3>
-                <button class="close-shortcuts"><i class="material-icons">close</i></button>
-            </div>
-            <div class="shortcuts-content">
-                <div class="shortcut-group">
-                    <h4>File Operations</h4>
-                    <div class="shortcut-item">
-                        <span class="shortcut-keys">Ctrl + S</span>
-                        <span class="shortcut-desc">Save current file</span>
-                    </div>
-                </div>
-                <div class="shortcut-group">
-                    <h4>Editor</h4>
-                    <div class="shortcut-item">
-                        <span class="shortcut-keys">Ctrl + F</span>
-                        <span class="shortcut-desc">Find and replace</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <span class="shortcut-keys">F3</span>
-                        <span class="shortcut-desc">Find next</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <span class="shortcut-keys">Shift + F3</span>
-                        <span class="shortcut-desc">Find previous</span>
-                    </div>
-                </div>
-                <div class="shortcut-group">
-                    <h4>View</h4>
-                    <div class="shortcut-item">
-                        <span class="shortcut-keys">Ctrl + P</span>
-                        <span class="shortcut-desc">Preview HTML file</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <span class="shortcut-keys">Ctrl + `</span>
-                        <span class="shortcut-desc">Toggle terminal</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <span class="shortcut-keys">Ctrl + \\</span>
-                        <span class="shortcut-desc">Split editor</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <span class="shortcut-keys">Ctrl + K</span>
-                        <span class="shortcut-desc">Show keyboard shortcuts</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Custom Modal Dialog (hidden by default) -->
-        <div class="modal-backdrop" style="display: none;">
-            <div class="modal-dialog">
-                <div class="modal-header">
-                    <h3 class="modal-title">Dialog Title</h3>
-                    <button class="modal-close">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p class="modal-message">Dialog message goes here.</p>
-                    <input type="text" class="modal-input" style="display: none;">
-                </div>
-                <div class="modal-footer">
-                    <button class="modal-button modal-cancel">Cancel</button>
-                    <button class="modal-button modal-confirm">OK</button>
+                
+                <div class="chat-input-container">
+                    <textarea 
+                        id="chat-input" 
+                        class="chat-input" 
+                        placeholder="Ask me anything about coding..."
+                        rows="3"
+                    ></textarea>
+                    <button id="send-button" class="send-button" title="Send Message (Enter)">
+                        <i class="material-icons">send</i>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Load highlight.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <!-- Load specific languages if needed, or use the common pack -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script> -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js"></script> -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/css.min.js"></script> -->
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button id="settings-close" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label for="api-key-input">Gemini API Key</label>
+                    <div class="api-key-container">
+                        <input 
+                            type="password" 
+                            id="api-key-input" 
+                            placeholder="Enter your Gemini API key"
+                            class="setting-input"
+                        >
+                        <button id="api-key-visibility-toggle" class="visibility-toggle" title="Show/Hide API Key">
+                            👁️
+                        </button>
+                    </div>
+                    <small>Your API key is stored locally and never sent to our servers.</small>
+                </div>
+                
+                <div class="setting-group">
+                    <label for="theme-select">Editor Theme</label>
+                    <select id="theme-select" class="setting-input">
+                        <option value="vs-dark">Dark Theme</option>
+                        <option value="vs-light">Light Theme</option>
+                        <option value="hc-black">High Contrast</option>
+                    </select>
+                </div>
+                
+                <div class="setting-group">
+                    <label for="font-size-input">Font Size</label>
+                    <input 
+                        type="number" 
+                        id="font-size-input" 
+                        min="10" 
+                        max="24" 
+                        value="14"
+                        class="setting-input"
+                    >
+                </div>
+                
+                <div class="setting-group">
+                    <label for="tab-size-input">Tab Size</label>
+                    <input 
+                        type="number" 
+                        id="tab-size-input" 
+                        min="2" 
+                        max="8" 
+                        value="4"
+                        class="setting-input"
+                    >
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="settings-save" class="btn btn-primary">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Initialize Monaco Editor -->
+    <script>
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+        require(['vs/editor/editor.main'], function() {
+            // Monaco Editor is now loaded
+            window.monaco = monaco;
+        });
+    </script>
 
     <!-- Load the main application script as a module -->
     <script type="module" src="main.js"></script>
-
 </body>
-</html> 
 </html> 

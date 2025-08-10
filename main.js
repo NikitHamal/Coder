@@ -1,41 +1,28 @@
 // Main application logic for Coder with Gemini AI
 import { SettingsStorage } from './settingsStorage.js';
-import { GeminiAI } from './geminiAI.js';
+import { GoogleGenerativeAI } from 'https://esm.sh/@google/generative-ai';
 
 class CoderApp {
   constructor() {
     this.settings = new SettingsStorage();
-    this.geminiAI = new GeminiAI();
+    this.geminiAI = null;
     this.currentChatId = null;
     this.chatHistory = [];
     this.isStreaming = false;
     this.currentStream = null;
-    
+
     this.initializeApp();
   }
 
   async initializeApp() {
     try {
-      // Initialize UI components
       this.initializeUI();
-      
-      // Load saved settings
       await this.loadSettings();
-      
-      // Set up event listeners
       this.setupEventListeners();
-      
-      // Initialize code editor
       this.initializeCodeEditor();
-      
-      // Check if API key is set
-      if (!this.settings.getSetting('geminiApiKey')) {
-        this.showSettingsModal();
-      }
-      
-      console.log('🚀 Coder Gemini AI initialized successfully');
+      this.updateStatusBar();
     } catch (error) {
-      console.error('Error initializing Coder app:', error);
+      console.error('Error initializing app:', error);
       this.showError('Failed to initialize application');
     }
   }
@@ -45,137 +32,130 @@ class CoderApp {
     this.editor = monaco.editor.create(document.getElementById('editor'), {
       value: '// Welcome to Coder with Gemini AI!\n// Start coding or ask me anything...',
       language: 'javascript',
-      theme: this.settings.getSetting('theme') || 'atom-one-dark',
-      fontSize: parseInt(this.settings.getSetting('fontSize')) || 14,
-      tabSize: parseInt(this.settings.getSetting('tabSize')) || 4,
+      theme: this.settings.getSetting('theme'),
+      fontSize: parseInt(this.settings.getSetting('fontSize')),
+      tabSize: parseInt(this.settings.getSetting('tabSize')),
       automaticLayout: true,
-      minimap: {
-        enabled: this.settings.getSetting('minimap') !== false
-      },
-      wordWrap: this.settings.getSetting('wordWrap') ? 'on' : 'off',
-      lineNumbers: this.settings.getSetting('showLineNumbers') !== false ? 'on' : 'off'
+      minimap: { enabled: this.settings.getSetting('minimap') },
+      lineNumbers: this.settings.getSetting('showLineNumbers') ? 'on' : 'off',
+      wordWrap: this.settings.getSetting('wordWrap') ? 'on' : 'off'
     });
 
     // Initialize chat interface
     this.chatContainer = document.getElementById('chat-container');
     this.chatInput = document.getElementById('chat-input');
-    this.chatSendBtn = document.getElementById('chat-send-btn');
     this.chatModeToggle = document.getElementById('chat-mode-toggle');
-    
+    this.modelSelect = document.getElementById('model-select');
+    this.sendButton = document.getElementById('send-button');
+
     // Initialize settings modal
     this.settingsModal = document.getElementById('settings-modal');
-    this.settingsOverlay = document.getElementById('settings-overlay');
     this.apiKeyInput = document.getElementById('api-key-input');
-    this.apiKeyToggle = document.getElementById('api-key-toggle');
-    this.modelSelect = document.getElementById('model-select');
-    
-    // Initialize other UI elements
-    this.fileExplorer = document.getElementById('file-explorer');
-    this.statusBar = document.getElementById('status-bar');
-    this.toolbar = document.getElementById('toolbar');
+    this.apiKeyVisibilityToggle = document.getElementById('api-key-visibility-toggle');
+    this.themeSelect = document.getElementById('theme-select');
+    this.fontSizeInput = document.getElementById('font-size-input');
+    this.tabSizeInput = document.getElementById('tab-size-input');
   }
 
   async loadSettings() {
     try {
-      // Load models from server
-      const response = await fetch('/api/gemini/models');
-      if (response.ok) {
-        const data = await response.json();
-        this.populateModelSelect(data.models);
-      }
-      
-      // Set current model
-      const currentModel = this.settings.getSetting('aiModel') || 'gemini-2.0-flash';
-      if (this.modelSelect) {
-        this.modelSelect.value = currentModel;
-      }
-      
-      // Apply theme
-      const theme = this.settings.getSetting('theme') || 'atom-one-dark';
-      monaco.editor.setTheme(theme);
-      
-      // Apply other settings
+      // Load Gemini models from configuration
+      const models = [
+        { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash (Experimental)', description: 'Fastest Gemini 2.0 model' },
+        { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', description: 'Fast and efficient Gemini 2.0 model' },
+        { id: 'gemini-2.0-pro', name: 'Gemini 2.0 Pro', description: 'Most capable Gemini 2.0 model' },
+        { id: 'gemini-2.0-pro-latest', name: 'Gemini 2.0 Pro (Latest)', description: 'Latest Gemini 2.0 Pro' },
+        { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Fast Gemini 1.5 model with 1M context' },
+        { id: 'gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash (Latest)', description: 'Latest Gemini 1.5 Flash' },
+        { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Pro Gemini 1.5 model with 1M context' },
+        { id: 'gemini-1.5-pro-latest', name: 'Gemini 1.5 Pro (Latest)', description: 'Latest Gemini 1.5 Pro' },
+        { id: 'gemini-1.0-pro', name: 'Gemini 1.0 Pro', description: 'Legacy Gemini 1.0 Pro model' },
+        { id: 'gemini-1.0-pro-vision', name: 'Gemini 1.0 Pro Vision', description: 'Legacy Gemini 1.0 Pro with enhanced vision' }
+      ];
+
+      this.populateModelSelect(models);
       this.applyEditorSettings();
-      
+      this.updateApiKeyVisibility();
     } catch (error) {
       console.error('Error loading settings:', error);
+      this.showError('Failed to load settings');
     }
   }
 
   populateModelSelect(models) {
-    if (!this.modelSelect) return;
-    
     this.modelSelect.innerHTML = '';
     models.forEach(model => {
       const option = document.createElement('option');
       option.value = model.id;
-      option.textContent = `${model.name} - ${model.description}`;
+      option.textContent = model.name;
       this.modelSelect.appendChild(option);
     });
+
+    // Set default model
+    const savedModel = this.settings.getSetting('aiModel');
+    if (savedModel && models.find(m => m.id === savedModel)) {
+      this.modelSelect.value = savedModel;
+    } else {
+      this.modelSelect.value = 'gemini-2.0-flash';
+    }
   }
 
   setupEventListeners() {
     // Chat input events
-    if (this.chatInput) {
-      this.chatInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          this.sendChatMessage();
-        }
-      });
-    }
-
-    if (this.chatSendBtn) {
-      this.chatSendBtn.addEventListener('click', () => {
+    this.chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
         this.sendChatMessage();
-      });
-    }
+      }
+    });
+
+    this.sendButton.addEventListener('click', () => {
+      this.sendChatMessage();
+    });
 
     // Chat mode toggle
-    if (this.chatModeToggle) {
-      this.chatModeToggle.addEventListener('click', () => {
-        this.toggleChatMode();
-      });
-    }
-
-    // Settings events
-    if (this.settingsModal) {
-      const closeBtn = this.settingsModal.querySelector('.close');
-      if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-          this.hideSettingsModal();
-        });
-      }
-    }
-
-    if (this.settingsOverlay) {
-      this.settingsOverlay.addEventListener('click', () => {
-        this.hideSettingsModal();
-      });
-    }
-
-    // API key toggle
-    if (this.apiKeyToggle) {
-      this.apiKeyToggle.addEventListener('click', () => {
-        this.toggleApiKeyVisibility();
-      });
-    }
+    this.chatModeToggle.addEventListener('click', () => {
+      this.toggleChatMode();
+    });
 
     // Model selection
-    if (this.modelSelect) {
-      this.modelSelect.addEventListener('change', (e) => {
-        this.settings.setSetting('aiModel', e.target.value);
-        this.updateStatusBar();
-      });
-    }
+    this.modelSelect.addEventListener('change', () => {
+      this.settings.setSetting('aiModel', this.modelSelect.value);
+    });
 
-    // Save settings button
-    const saveSettingsBtn = document.getElementById('save-settings');
-    if (saveSettingsBtn) {
-      saveSettingsBtn.addEventListener('click', () => {
-        this.saveSettings();
-      });
-    }
+    // Settings modal events
+    document.getElementById('settings-button').addEventListener('click', () => {
+      this.showSettingsModal();
+    });
+
+    document.getElementById('settings-close').addEventListener('click', () => {
+      this.hideSettingsModal();
+    });
+
+    document.getElementById('settings-save').addEventListener('click', () => {
+      this.saveSettings();
+    });
+
+    // API key visibility toggle
+    this.apiKeyVisibilityToggle.addEventListener('click', () => {
+      this.toggleApiKeyVisibility();
+    });
+
+    // Theme and editor settings
+    this.themeSelect.addEventListener('change', () => {
+      this.settings.setSetting('theme', this.themeSelect.value);
+      this.applyEditorSettings();
+    });
+
+    this.fontSizeInput.addEventListener('change', () => {
+      this.settings.setSetting('fontSize', this.fontSizeInput.value);
+      this.applyEditorSettings();
+    });
+
+    this.tabSizeInput.addEventListener('change', () => {
+      this.settings.setSetting('tabSize', this.tabSizeInput.value);
+      this.applyEditorSettings();
+    });
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
@@ -193,108 +173,182 @@ class CoderApp {
             e.preventDefault();
             this.newFile();
             break;
-          case ',':
-            e.preventDefault();
-            this.showSettingsModal();
-            break;
         }
-      }
-    });
-
-    // Window events
-    window.addEventListener('beforeunload', () => {
-      if (this.settings.hasUnsavedChanges()) {
-        return 'You have unsaved changes. Are you sure you want to leave?';
       }
     });
   }
 
   initializeCodeEditor() {
-    // Set up file change detection
+    // Set up editor change listener
     this.editor.onDidChangeModelContent(() => {
-      this.settings.markUnsavedChanges();
-      this.updateStatusBar();
+      // Auto-save if enabled
+      if (this.settings.getSetting('autoSave')) {
+        // Debounced auto-save
+        clearTimeout(this.autoSaveTimeout);
+        this.autoSaveTimeout = setTimeout(() => {
+          this.saveCurrentFile();
+        }, 1000);
+      }
     });
 
-    // Set up language detection
-    this.editor.onDidChangeModelLanguage(() => {
-      this.updateStatusBar();
-    });
-
-    // Set up cursor position tracking
+    // Set up cursor position listener
     this.editor.onDidChangeCursorPosition(() => {
+      this.updateStatusBar();
+    });
+
+    // Set up language change listener
+    this.editor.onDidChangeModelLanguage(() => {
       this.updateStatusBar();
     });
   }
 
   async sendChatMessage() {
-    const message = this.chatInput?.value?.trim();
-    if (!message || this.isStreaming) return;
+    const message = this.chatInput.value.trim();
+    if (!message) return;
 
-    const apiKey = this.settings.getSetting('geminiApiKey');
+    const apiKey = this.settings.getGeminiApiKey();
     if (!apiKey) {
       this.showError('Please set your Gemini API key in settings first');
       this.showSettingsModal();
       return;
     }
 
+    // Initialize Gemini AI if not already done
+    if (!this.geminiAI || this.geminiAI.apiKey !== apiKey) {
+      try {
+        this.geminiAI = new GoogleGenerativeAI(apiKey);
+        this.geminiAI.apiKey = apiKey; // Store for comparison
+      } catch (error) {
+        this.showError('Failed to initialize Gemini AI: ' + error.message);
+        return;
+      }
+    }
+
+    // Add user message to chat
+    this.addChatMessage('user', message);
+    this.chatInput.value = '';
+
+    const model = this.modelSelect.value;
+    const mode = this.settings.getSetting('aiMode');
+
     try {
       this.isStreaming = true;
-      this.chatInput.disabled = true;
-      this.chatSendBtn.disabled = true;
+      this.sendButton.disabled = true;
+      this.sendButton.textContent = 'Stop';
 
-      // Add user message to chat
-      this.addChatMessage('user', message);
-      this.chatInput.value = '';
-
-      // Get current mode
-      const mode = this.chatModeToggle?.classList.contains('write-mode') ? 'write' : 'ask';
-      
-      // Get workspace context for write mode
-      let workspaceContext = null;
       if (mode === 'write') {
-        workspaceContext = this.getWorkspaceContext();
-      }
-
-      // Get selected model
-      const modelId = this.modelSelect?.value || 'gemini-2.0-flash';
-
-      // Send message to Gemini
-      const response = await this.geminiAI.sendMessage({
-        message,
-        modelId,
-        mode,
-        workspaceContext,
-        apiKey,
-        previousMessages: this.chatHistory
-      });
-
-      if (response.success) {
-        // Add AI response to chat
-        this.addChatMessage('assistant', response.content);
-        
-        // Handle write mode actions
-        if (mode === 'write' && response.actions) {
-          await this.executeWriteActions(response.actions);
-        }
+        // Use non-streaming for write mode
+        await this.sendWriteCompletion(message, model, apiKey);
       } else {
-        this.showError(`AI Error: ${response.error}`);
+        // Use streaming for ask mode
+        await this.sendStreamingChat(message, model, apiKey);
       }
-
     } catch (error) {
-      console.error('Error sending chat message:', error);
-      this.showError(`Failed to send message: ${error.message}`);
+      console.error('Error sending message:', error);
+      this.showError('Failed to send message: ' + error.message);
     } finally {
       this.isStreaming = false;
-      this.chatInput.disabled = false;
-      this.chatSendBtn.disabled = false;
-      this.chatInput.focus();
+      this.sendButton.disabled = false;
+      this.sendButton.textContent = 'Send';
+    }
+  }
+
+  async sendStreamingChat(message, model, apiKey) {
+    try {
+      const geminiModel = this.geminiAI.getGenerativeModel({ 
+        model: model,
+        generationConfig: {
+          maxOutputTokens: 8192,
+          temperature: 0.7,
+          topP: 0.8,
+          topK: 40
+        }
+      });
+
+      const chat = geminiModel.startChat({
+        history: this.chatHistory.slice(-10).map(msg => ({
+          role: msg.role === 'user' ? 'user' : 'model',
+          parts: [{ text: msg.content }]
+        }))
+      });
+
+      let aiResponse = '';
+      this.addChatMessage('assistant', '');
+
+      const result = await chat.sendMessage(message);
+      const response = await result.response;
+      const text = response.text();
+
+      // Simulate streaming by updating the message
+      const words = text.split(' ');
+      for (let i = 0; i < words.length; i++) {
+        aiResponse += words[i] + (i < words.length - 1 ? ' ' : '');
+        this.updateLastMessage(aiResponse);
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
+      // Update chat history
+      this.chatHistory.push({ role: 'user', content: message });
+      this.chatHistory.push({ role: 'assistant', content: aiResponse });
+
+    } catch (error) {
+      console.error('Error in streaming chat:', error);
+      this.showError('Failed to get response: ' + error.message);
+    }
+  }
+
+  async sendWriteCompletion(message, model, apiKey) {
+    try {
+      const geminiModel = this.geminiAI.getGenerativeModel({ 
+        model: model,
+        generationConfig: {
+          maxOutputTokens: 8192,
+          temperature: 0.7,
+          topP: 0.8,
+          topK: 40
+        }
+      });
+
+      const workspaceContext = await this.getWorkspaceContext();
+      const writeInstructions = `You are in 'write' mode. Analyze the request and the provided context.
+
+Context:
+---
+${workspaceContext}
+---
+
+Respond ONLY with a JSON object containing an 'actions' array (objects with 'type', 'path', 'content') and an 'explanation' string. Example: { "actions": [{ "type": "create_file", "path": "new.js", "content": "console.log('hello');" }], "explanation": "Created new.js." }`;
+
+      const finalMessage = `${writeInstructions}\n\nUser request: ${message}`;
+
+      const result = await geminiModel.generateContent(finalMessage);
+      const response = await result.response;
+      const text = response.text();
+
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed.actions && Array.isArray(parsed.actions)) {
+          await this.executeWriteActions(parsed.actions);
+          this.addChatMessage('assistant', `✅ Executed actions: ${parsed.explanation}`);
+        } else {
+          this.addChatMessage('assistant', `❌ Invalid response format: ${text}`);
+        }
+      } catch (parseError) {
+        this.addChatMessage('assistant', `❌ Failed to parse response: ${text}`);
+      }
+
+      // Update chat history
+      this.chatHistory.push({ role: 'user', content: message });
+
+    } catch (error) {
+      console.error('Error in write completion:', error);
+      this.showError('Failed to get response: ' + error.message);
     }
   }
 
   addChatMessage(role, content) {
     const messageDiv = document.createElement('div');
-    messageDiv.className = `chat-message ${role}-message`;
+    messageDiv.className = `chat-message ${role}`;
     
     const roleLabel = document.createElement('div');
     roleLabel.className = 'message-role';
@@ -304,7 +358,6 @@ class CoderApp {
     contentDiv.className = 'message-content';
     
     if (role === 'assistant') {
-      // Format AI response with syntax highlighting
       contentDiv.innerHTML = this.formatAIResponse(content);
     } else {
       contentDiv.textContent = content;
@@ -316,17 +369,24 @@ class CoderApp {
     this.chatContainer.appendChild(messageDiv);
     this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
     
-    // Add to history
-    this.chatHistory.push({ role, content, timestamp: Date.now() });
-    
-    // Limit history size
-    if (this.chatHistory.length > 100) {
-      this.chatHistory = this.chatHistory.slice(-50);
+    // Store message for context
+    if (role === 'user') {
+      this.currentChatId = Date.now();
+    }
+  }
+
+  updateLastMessage(content) {
+    const lastMessage = this.chatContainer.lastElementChild;
+    if (lastMessage && lastMessage.classList.contains('assistant')) {
+      const contentDiv = lastMessage.querySelector('.message-content');
+      if (contentDiv) {
+        contentDiv.innerHTML = this.formatAIResponse(content);
+      }
     }
   }
 
   formatAIResponse(content) {
-    // Convert markdown to HTML
+    // Convert markdown-like formatting to HTML
     return content
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
@@ -335,235 +395,147 @@ class CoderApp {
       .replace(/\n/g, '<br>');
   }
 
-  getWorkspaceContext() {
-    const currentFile = this.getCurrentFilePath();
-    const fileContent = this.editor.getValue();
-    const language = this.editor.getModel()?.getLanguageId() || 'text';
+  async getWorkspaceContext() {
+    // Get current file content
+    const currentContent = this.editor.getValue();
+    const currentLanguage = this.editor.getModel().getLanguageId();
     
-    return `## File List
-${this.getFileList()}
+    return `## Current File
+Language: ${currentLanguage}
+Content:
+\`\`\`${currentLanguage}
+${currentContent}
+\`\`\`
 
-## Active File Path
-${currentFile}
-
-## Active File Language
-${language}
-
-## Active File Content
-\`\`\`${language}
-${fileContent}
-\`\`\``;
-  }
-
-  getFileList() {
-    // This would be populated from the file explorer
-    // For now, return a placeholder
-    return 'index.html\nmain.js\nstyles.css\nserver.js';
-  }
-
-  getCurrentFilePath() {
-    // This would be the actual file path
-    // For now, return a placeholder
-    return 'main.js';
+## Workspace
+Current working directory: ${window.location.origin}
+Available files: index.html, main.js, server.js, package.json, settingsStorage.js, geminiConfig.js`;
   }
 
   async executeWriteActions(actions) {
-    if (!Array.isArray(actions)) return;
-    
     for (const action of actions) {
       try {
         switch (action.type) {
           case 'create_file':
-            await this.createFile(action.path, action.content);
+            // Create file content in editor
+            this.editor.setValue(action.content);
+            this.showSuccess(`Created file: ${action.path}`);
             break;
           case 'update_file':
-            await this.updateFile(action.path, action.content);
-            break;
-          case 'delete_file':
-            await this.deleteFile(action.path);
+            // Update current file content
+            this.editor.setValue(action.content);
+            this.showSuccess(`Updated file: ${action.path}`);
             break;
           default:
             console.warn('Unknown action type:', action.type);
         }
       } catch (error) {
-        console.error(`Error executing action ${action.type}:`, error);
+        console.error('Error executing action:', error);
         this.showError(`Failed to execute action: ${error.message}`);
       }
     }
   }
 
-  async createFile(path, content) {
-    // Implementation for creating files
-    console.log(`Creating file: ${path}`);
-    // This would typically involve a file system operation
-  }
-
-  async updateFile(path, content) {
-    // Implementation for updating files
-    console.log(`Updating file: ${path}`);
-    // This would typically involve a file system operation
-  }
-
-  async deleteFile(path) {
-    // Implementation for deleting files
-    console.log(`Deleting file: ${path}`);
-    // This would typically involve a file system operation
-  }
-
   toggleChatMode() {
-    if (!this.chatModeToggle) return;
+    const currentMode = this.settings.getSetting('aiMode');
+    const newMode = currentMode === 'ask' ? 'write' : 'ask';
+    this.settings.setSetting('aiMode', newMode);
     
-    const isWriteMode = this.chatModeToggle.classList.contains('write-mode');
-    if (isWriteMode) {
-      this.chatModeToggle.classList.remove('write-mode');
-      this.chatModeToggle.textContent = 'Ask Mode';
-      this.chatModeToggle.title = 'Switch to Write Mode';
-    } else {
-      this.chatModeToggle.classList.add('write-mode');
-      this.chatModeToggle.textContent = 'Write Mode';
-      this.chatModeToggle.title = 'Switch to Ask Mode';
-    }
+    this.chatModeToggle.textContent = newMode === 'ask' ? 'Write Mode' : 'Ask Mode';
+    this.chatModeToggle.className = `chat-mode-toggle ${newMode}`;
     
-    this.settings.setSetting('aiMode', isWriteMode ? 'ask' : 'write');
+    this.showNotification(`Switched to ${newMode} mode`);
   }
 
   showSettingsModal() {
-    if (this.settingsModal && this.settingsOverlay) {
-      this.settingsModal.style.display = 'block';
-      this.settingsOverlay.style.display = 'block';
-      
-      // Populate current settings
-      const apiKey = this.settings.getSetting('geminiApiKey');
-      if (this.apiKeyInput) {
-        this.apiKeyInput.value = apiKey;
-        this.updateApiKeyVisibility();
-      }
-    }
+    this.settingsModal.style.display = 'block';
+    this.apiKeyInput.value = this.settings.getGeminiApiKey();
+    this.themeSelect.value = this.settings.getSetting('theme');
+    this.fontSizeInput.value = this.settings.getSetting('fontSize');
+    this.tabSizeInput.value = this.settings.getSetting('tabSize');
   }
 
   hideSettingsModal() {
-    if (this.settingsModal && this.settingsOverlay) {
-      this.settingsModal.style.display = 'none';
-      this.settingsOverlay.style.display = 'none';
-    }
+    this.settingsModal.style.display = 'none';
   }
 
   toggleApiKeyVisibility() {
-    if (!this.apiKeyInput || !this.apiKeyToggle) return;
-    
-    const isHidden = this.apiKeyInput.type === 'password';
-    this.apiKeyInput.type = isHidden ? 'text' : 'password';
-    this.apiKeyToggle.textContent = isHidden ? '👁️' : '🙈';
-    this.apiKeyToggle.title = isHidden ? 'Hide API Key' : 'Show API Key';
+    const isVisible = this.apiKeyInput.type === 'text';
+    this.apiKeyInput.type = isVisible ? 'password' : 'text';
+    this.updateApiKeyVisibility();
   }
 
   updateApiKeyVisibility() {
-    if (!this.apiKeyInput || !this.apiKeyToggle) return;
-    
-    const apiKey = this.apiKeyInput.value;
-    if (apiKey) {
-      this.apiKeyInput.type = 'password';
-      this.apiKeyToggle.textContent = '🙈';
-      this.apiKeyToggle.title = 'Show API Key';
-    }
+    const isVisible = this.apiKeyInput.type === 'text';
+    this.apiKeyVisibilityToggle.textContent = isVisible ? '🙈' : '👁️';
+    this.apiKeyVisibilityToggle.title = isVisible ? 'Hide API Key' : 'Show API Key';
   }
 
   async saveSettings() {
     try {
-      const apiKey = this.apiKeyInput?.value?.trim();
+      const apiKey = this.apiKeyInput.value.trim();
       
-      if (!apiKey) {
-        this.showError('API key is required');
-        return;
+      if (apiKey) {
+        // Validate API key by testing it
+        const isValid = await this.validateApiKey(apiKey);
+        if (!isValid) {
+          this.showError('Invalid API key. Please check and try again.');
+          return;
+        }
+        
+        this.settings.setGeminiApiKey(apiKey);
+        this.showSuccess('API key saved and validated successfully!');
       }
-
-      // Validate API key
-      const isValid = await this.validateApiKey(apiKey);
-      if (!isValid) {
-        this.showError('Invalid API key. Please check and try again.');
-        return;
-      }
-
-      // Save settings
-      this.settings.setSetting('geminiApiKey', apiKey);
-      this.settings.setSetting('aiModel', this.modelSelect?.value || 'gemini-2.0-flash');
       
-      // Save to storage
-      await this.settings.saveSettings();
+      this.settings.setSetting('theme', this.themeSelect.value);
+      this.settings.setSetting('fontSize', this.fontSizeInput.value);
+      this.settings.setSetting('tabSize', this.tabSizeInput.value);
       
-      // Hide modal
+      this.applyEditorSettings();
       this.hideSettingsModal();
-      
-      // Show success message
       this.showSuccess('Settings saved successfully!');
-      
-      // Update status
-      this.updateStatusBar();
       
     } catch (error) {
       console.error('Error saving settings:', error);
-      this.showError(`Failed to save settings: ${error.message}`);
+      this.showError('Failed to save settings: ' + error.message);
     }
   }
 
   async validateApiKey(apiKey) {
     try {
-      const response = await fetch('/api/gemini/validate-key', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey })
-      });
-      
-      const data = await response.json();
-      return data.valid === true;
+      const testGemini = new GoogleGenerativeAI(apiKey);
+      const model = testGemini.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const result = await model.generateContent('Hello');
+      await result.response;
+      return true;
     } catch (error) {
-      console.error('Error validating API key:', error);
+      console.error('API key validation failed:', error);
       return false;
     }
   }
 
   applyEditorSettings() {
-    if (!this.editor) return;
-    
-    // Apply theme
-    const theme = this.settings.getSetting('theme') || 'atom-one-dark';
-    monaco.editor.setTheme(theme);
-    
-    // Apply font size
-    const fontSize = parseInt(this.settings.getSetting('fontSize')) || 14;
-    this.editor.updateOptions({ fontSize });
-    
-    // Apply tab size
-    const tabSize = parseInt(this.settings.getSetting('tabSize')) || 4;
-    this.editor.updateOptions({ tabSize });
-    
-    // Apply word wrap
-    const wordWrap = this.settings.getSetting('wordWrap') ? 'on' : 'off';
-    this.editor.updateOptions({ wordWrap });
-    
-    // Apply line numbers
-    const lineNumbers = this.settings.getSetting('showLineNumbers') !== false ? 'on' : 'off';
-    this.editor.updateOptions({ lineNumbers });
-    
-    // Apply minimap
-    const minimap = this.settings.getSetting('minimap') !== false;
-    this.editor.updateOptions({ 
-      minimap: { enabled: minimap } 
-    });
+    if (this.editor) {
+      monaco.editor.setTheme(this.settings.getSetting('theme'));
+      this.editor.updateOptions({
+        fontSize: parseInt(this.settings.getSetting('fontSize')),
+        tabSize: parseInt(this.settings.getSetting('tabSize')),
+        minimap: { enabled: this.settings.getSetting('minimap') },
+        lineNumbers: this.settings.getSetting('showLineNumbers') ? 'on' : 'off',
+        wordWrap: this.settings.getSetting('wordWrap') ? 'on' : 'off'
+      });
+    }
   }
 
   updateStatusBar() {
-    if (!this.statusBar) return;
-    
-    const model = this.modelSelect?.value || 'gemini-2.0-flash';
-    const position = this.editor.getPosition();
-    const language = this.editor.getModel()?.getLanguageId() || 'text';
-    
-    this.statusBar.innerHTML = `
-      <span>Model: ${model}</span> |
-      <span>Language: ${language}</span> |
-      <span>Line: ${position.lineNumber}, Column: ${position.column}</span>
-    `;
+    const statusBar = document.getElementById('status-bar');
+    if (statusBar && this.editor) {
+      const position = this.editor.getPosition();
+      const language = this.editor.getModel().getLanguageId();
+      const model = this.modelSelect.value;
+      
+      statusBar.textContent = `Model: ${model} | Language: ${language} | Line: ${position.lineNumber}, Column: ${position.column}`;
+    }
   }
 
   showError(message) {
@@ -581,41 +553,33 @@ ${fileContent}
     
     document.body.appendChild(notification);
     
-    // Auto-remove after 5 seconds
     setTimeout(() => {
-      if (notification.parentNode) {
-        notification.parentNode.removeChild(notification);
-      }
+      notification.remove();
     }, 5000);
   }
 
-  // File operations
+  // File operations (placeholder implementations)
   newFile() {
     this.editor.setValue('');
-    this.settings.markUnsavedChanges();
-    this.updateStatusBar();
+    this.showNotification('New file created');
   }
 
   async openFile() {
-    // Implementation for opening files
-    console.log('Opening file...');
+    // This would typically open a file picker
+    this.showNotification('File open functionality not implemented yet');
   }
 
   async saveCurrentFile() {
-    // Implementation for saving files
-    console.log('Saving file...');
-    this.settings.clearUnsavedChanges();
-    this.updateStatusBar();
+    // This would typically save to a specific file
+    this.showNotification('File saved to editor');
   }
 }
 
-// Initialize the app when the page loads
+// Initialize app when Monaco Editor is ready
 document.addEventListener('DOMContentLoaded', () => {
-  // Load Monaco Editor first
   if (typeof monaco !== 'undefined') {
     new CoderApp();
   } else {
-    // Wait for Monaco to load
     const checkMonaco = setInterval(() => {
       if (typeof monaco !== 'undefined') {
         clearInterval(checkMonaco);
@@ -625,5 +589,4 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Export for potential use in other modules
 window.CoderApp = CoderApp; 
