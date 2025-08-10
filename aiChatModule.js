@@ -181,6 +181,7 @@ async function getGeminiResponse(message, assistantMessageDiv, mode, modelId, wo
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+    let buffer = '';
     let fullResponseContent = '';
 
     try {
@@ -188,9 +189,24 @@ async function getGeminiResponse(message, assistantMessageDiv, mode, modelId, wo
             const { done, value } = await reader.read();
             if (done) break;
 
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n');
+            buffer += decoder.decode(value, { stream: true });
 
+            // The Gemini API stream sometimes sends multiple JSON objects in one chunk, separated by commas.
+            // We need to handle this by trying to parse the buffer as a whole, and if that fails,
+            // we assume it's a stream of JSON objects.
+
+            // First, let's try to parse the whole buffer as a single JSON array
+            try {
+                const jsonArray = JSON.parse(buffer);
+                fullResponseContent = jsonArray.map(item => item.candidates[0].content.parts[0].text).join('');
+                updateAssistantMessageUI(assistantMessageDiv, { finalContent: fullResponseContent });
+                if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                continue; // Move to the next chunk
+            } catch (e) {
+                // It's not a single JSON array, so let's try to parse it as a stream of objects.
+            }
+
+            const lines = buffer.split('\n');
             for (const line of lines) {
                 if (line.startsWith('data:')) {
                     const dataStr = line.substring(5).trim();
@@ -213,6 +229,18 @@ async function getGeminiResponse(message, assistantMessageDiv, mode, modelId, wo
             reader.cancel().catch(e => console.warn("Error cancelling reader:", e));
         }
     }
+
+    // The final buffer might contain the last part of the response.
+    // Let's try to parse it.
+    try {
+        const jsonArray = JSON.parse(buffer);
+        fullResponseContent = jsonArray.map(item => item.candidates[0].content.parts[0].text).join('');
+        updateAssistantMessageUI(assistantMessageDiv, { finalContent: fullResponseContent });
+        if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    } catch(e) {
+        // Ignore if the final buffer is not a valid JSON.
+    }
+
 
     const finalTrimmedContent = fullResponseContent.trim();
     let agenticActions = null;
