@@ -9,11 +9,11 @@ export function lintJsCode(code) {
         // Skip empty lines and comments
         if (!trimmed || trimmed.startsWith('//')) return;
         // Check for missing semicolon (simple heuristic)
-        if (/^[^\{\}\s][^;\{\}]$/.test(trimmed) && !trimmed.endsWith(';')) {
+        if (/^[^{}\s][^;{}]$/.test(trimmed) && !trimmed.endsWith(';')) {
             problems.push({
                 line: idx + 1,
                 message: 'Missing semicolon',
-                type: 'warning'
+                type: 'warning',
             });
         }
         // Track open/close brackets for basic syntax
@@ -26,8 +26,8 @@ export function lintJsCode(code) {
         problems.push({
             line: openBrackets[openBrackets.length - 1],
             message: 'Unclosed { bracket',
-            type: 'error'
+            type: 'error',
         });
     }
     return problems;
-} 
+}

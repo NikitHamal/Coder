@@ -1,14 +1,23 @@
 // editor.js
+import 'highlight.js/styles/atom-one-dark.css';
+import hljs from 'highlight.js/lib/core';
+import javascript from 'highlight.js/lib/languages/javascript';
+import xml from 'highlight.js/lib/languages/xml';
+import css from 'highlight.js/lib/languages/css';
+import json from 'highlight.js/lib/languages/json';
+import markdown from 'highlight.js/lib/languages/markdown';
 import { fileStorage } from './fileStorage.js';
-import { updateStatusBar, updateCursorPositionUI } from './ui.js'; // Import necessary UI updaters
+import { updateCursorPositionUI } from './ui.js'; // Import necessary UI updaters
 import { showAlert } from './modal.js'; // Import alert for preview errors
 
-// Function to be set by main.js
-let saveCurrentFileFunc = () => console.warn('saveCurrentFile not set in editor.js');
+// Register languages
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('xml', xml); // For HTML
+hljs.registerLanguage('css', css);
+hljs.registerLanguage('json', json);
+hljs.registerLanguage('markdown', markdown);
 
-export function setEditorModuleDependencies(dependencies) {
-    saveCurrentFileFunc = dependencies.saveCurrentFile;
-}
+import { updateFileContent, getState } from './state.js';
 
 // --- DOM Elements ---
 const editorPanes = document.querySelectorAll('.editor-pane');
@@ -16,7 +25,8 @@ const previewButton = document.querySelector('.preview-button');
 
 // --- Editor State ---
 // Track the active pane globally within this module
-let activePane = document.querySelector('.editor-pane.active') || editorPanes[0];
+let activePane =
+    document.querySelector('.editor-pane.active') || editorPanes[0];
 if (!activePane.classList.contains('active')) {
     activePane.classList.add('active'); // Ensure first pane is active if none are
 }
@@ -24,9 +34,9 @@ if (!activePane.classList.contains('active')) {
 // --- Core Editor Update ---
 
 // Update a specific editor pane's content and highlighting
-export function updateEditorPane(pane, filePath) {
+export function updateEditorPane(pane, filePath, content = '') {
     if (!pane) {
-        console.error("updateEditorPane called with null or undefined pane.");
+        console.error('updateEditorPane called with null or undefined pane.');
         return;
     }
     pane.dataset.filePath = filePath; // Store the path on the pane element
@@ -34,21 +44,16 @@ export function updateEditorPane(pane, filePath) {
     const lineNumbersElement = pane.querySelector('.line-numbers');
 
     if (!editorCodeElement || !lineNumbersElement) {
-        console.error("Editor code or line number element not found in pane:", pane);
+        console.error(
+            'Editor code or line number element not found in pane:',
+            pane
+        );
         return;
     }
 
     let language = 'plaintext';
-    let content = '';
 
     if (filePath) {
-        // Get content from storage
-        content = fileStorage.getFile(filePath);
-        if (content === null) {
-             console.warn(`File content not found for path: ${filePath}. Displaying empty.`);
-             content = ''; // Display empty if file somehow missing
-        }
-
         // Determine language for syntax highlighting
         const fileName = filePath.split('/').pop();
         if (fileName.endsWith('.html')) language = 'html';
@@ -71,9 +76,9 @@ export function updateEditorPane(pane, filePath) {
         delete editorCodeElement.dataset.highlighted; // Remove flag if hljs sets one
         // Workaround for potential issues if hljs modifies the element structure
         try {
-             hljs.highlightElement(editorCodeElement);
-        } catch(e) {
-            console.error("Highlight.js error:", e);
+            hljs.highlightElement(editorCodeElement);
+        } catch (e) {
+            console.error('Highlight.js error:', e);
             // Optional: Restore text content if highlighting breaks significantly
             // editorCodeElement.textContent = content;
         }
@@ -89,8 +94,8 @@ export function updateEditorPane(pane, filePath) {
 function updateLineNumbersForPane(pane, lineNumbersElement, codeElement) {
     // Ensure elements exist
     if (!lineNumbersElement || !codeElement) {
-         // console.warn("Line number or code element missing for pane update:", pane);
-         return;
+        // console.warn("Line number or code element missing for pane update:", pane);
+        return;
     }
 
     // Use textContent for accurate line count, split by newline
@@ -117,31 +122,31 @@ function updateLineNumbersForPane(pane, lineNumbersElement, codeElement) {
     }
 }
 
-
 // Update the currently active editor pane
-export function updateEditor(filePath) {
-     if (!activePane) {
-        console.error("No active editor pane found.");
+export function updateEditor(filePath, files) {
+    if (!activePane) {
+        console.error('No active editor pane found.');
         activePane = editorPanes[0]; // Fallback to first pane
         if (!activePane) return; // No panes at all?
-     }
+    }
 
-     // Handle case where no file is selected (e.g., last tab closed)
-     if (!filePath) {
-        console.log("No file selected. Clearing editor."); // Log info instead of warning
+    // Handle case where no file is selected (e.g., last tab closed)
+    if (!filePath) {
+        console.log('No file selected. Clearing editor.'); // Log info instead of warning
         // Clear the active editor pane if no file path
-        updateEditorPane(activePane, null);
-        updateStatusBar(null);
+        updateEditorPane(activePane, null, '');
+        // updateStatusBar(null); // This should also be state-driven
         updateCursorPositionUI(1, 1); // Reset cursor UI
         return;
     }
 
+    const content = files[filePath] || '';
     // If filePath is valid, proceed to update the pane
-    updateEditorPane(activePane, filePath);
-    updateStatusBar(filePath); // Update status bar for the loaded file
+    updateEditorPane(activePane, filePath, content);
+    // updateStatusBar(filePath); // This should also be state-driven
     // Reset cursor pos display when loading new file
     const codeEl = activePane.querySelector('pre code');
-    if(codeEl) updateCursorPosition(codeEl); 
+    if (codeEl) updateCursorPosition(codeEl);
 }
 
 // --- Editor Input Handling ---
@@ -165,13 +170,17 @@ function handleTabKey(event, codeElement) {
     selection.removeAllRanges();
     selection.addRange(range);
 
-    saveCurrentFileFunc(); // Save after edit using the imported function
+    const { activeFile } = getState();
+    if (activeFile) {
+        updateFileContent(activeFile, codeElement.textContent);
+    }
     const pane = event.target.closest('.editor-pane');
-    updateLineNumbersForPane(pane,
-                               pane.querySelector('.line-numbers'),
-                               codeElement);
+    updateLineNumbersForPane(
+        pane,
+        pane.querySelector('.line-numbers'),
+        codeElement
+    );
 }
-
 
 // --- Cursor Position ---
 
@@ -187,7 +196,10 @@ export function updateCursorPosition(editorCodeElement) {
 
         // Ensure selection is within the target code element
         // Check both start and end container in case of selection across nodes
-        if (editorCodeElement.contains(range.startContainer) && editorCodeElement.contains(range.endContainer)) {
+        if (
+            editorCodeElement.contains(range.startContainer) &&
+            editorCodeElement.contains(range.endContainer)
+        ) {
             const preCaretRange = range.cloneRange();
             preCaretRange.selectNodeContents(editorCodeElement);
             // Set end to the *start* of the selection/cursor for accurate line/col
@@ -203,90 +215,53 @@ export function updateCursorPosition(editorCodeElement) {
     updateCursorPositionUI(lineNum, colNum); // Update display via UI module
 }
 
+import { subscribe } from './state.js';
 
-// --- Theme Handling ---
+// --- State-driven UI Updates ---
 
-export function updateTheme(theme) {
-    const highlightThemeStylesheet = document.getElementById('theme-stylesheet');
+function applyFontSize(size) {
+    document
+        .querySelectorAll('.editor pre code, .editor pre, .line-numbers')
+        .forEach((el) => {
+            el.style.fontSize = `${size}px`;
+        });
+}
+
+function applyTheme(theme) {
+    // This function can be expanded later to dynamically import theme CSS files.
+    // For now, it just handles the light/dark mode body class.
     const body = document.body;
-    let highlightThemeUrl;
-
-    // Toggle body class for light/dark themes
-    if (theme === 'coder-light' || theme === 'github') { // Treat github as light too
+    if (theme === 'coder-light' || theme === 'github') {
         body.classList.add('light-theme');
-        // Choose a light theme for highlight.js
-        highlightThemeUrl = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
     } else {
         body.classList.remove('light-theme');
-        // Use the selected dark theme for highlight.js
-        // Handle potential theme name mismatches if necessary
-        const validThemes = ['atom-one-dark', 'dracula', 'monokai']; // Add more valid CDN theme names
-        const safeTheme = validThemes.includes(theme) ? theme : 'atom-one-dark'; // Fallback theme
-        highlightThemeUrl = `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/${safeTheme}.min.css`;
-    }
-
-    // Update highlight.js theme stylesheet
-    if (highlightThemeStylesheet) {
-        highlightThemeStylesheet.href = highlightThemeUrl;
-    } else {
-        console.error("Theme stylesheet element not found.");
-    }
-
-    // Update editor background color based on theme
-    const editorBg = getThemeBackground(theme); // Use helper function
-    const lineNumBg = (theme === 'coder-light' || theme === 'github') ? '#f0f0f0' : '#21252b'; // Example background for line numbers
-
-    document.querySelectorAll('.editor').forEach(editor => {
-        editor.style.backgroundColor = editorBg;
-    });
-    document.querySelectorAll('.line-numbers').forEach(ln => {
-        ln.style.backgroundColor = lineNumBg;
-    });
-
-    // Re-highlight content in visible panes after theme change
-    editorPanes.forEach(pane => {
-        // Check if pane is actually visible (might be hidden in split view)
-        if (pane.offsetParent !== null) { 
-            const filePath = pane.dataset.filePath;
-            if (filePath) {
-                // Re-apply highlighting (updateEditorPane handles this)
-                updateEditorPane(pane, filePath);
-            }
-        }
-    });
-}
-
-// Helper to get appropriate background color based on theme name
-export function getThemeBackground(theme) {
-    // Define background colors for your supported themes
-    switch (theme) {
-        case 'github':
-        case 'coder-light':
-            return '#ffffff'; // White background for light themes
-        case 'atom-one-dark':
-            return '#282c34';
-        case 'dracula':
-            return '#282a36';
-        case 'monokai':
-            return '#272822';
-        // Add more cases for other themes
-        default:
-            return '#282c34'; // Default dark background
     }
 }
 
-// Apply the initial theme on load
-export function applyInitialTheme() {
-    const savedTheme = localStorage.getItem('coder_theme') || 'atom-one-dark';
-    updateTheme(savedTheme);
-}
+// Subscribe to state changes to keep the editor UI in sync.
+subscribe((newState) => {
+    const { settings, activeFile, files } = newState;
+    applyFontSize(settings.fontSize);
+    applyTheme(settings.theme);
+    updateEditor(activeFile, files);
+});
 
+// Apply initial theme is now handled by the first notification from the state.
+export { applyInitialTheme };
+function applyInitialTheme() {
+    /* This function is now effectively handled by the state subscription,
+       but we keep it here to avoid breaking the import in main.js for now.
+       It will be removed in a later refactoring step. */
+}
 
 // --- Preview Functionality ---
 
 async function previewHtml(filePath) {
     if (!filePath || !filePath.endsWith('.html')) {
-        showAlert('Preview Error', 'Please open and select an HTML file first.');
+        showAlert(
+            'Preview Error',
+            'Please open and select an HTML file first.'
+        );
         return;
     }
 
@@ -312,8 +287,8 @@ async function previewHtml(filePath) {
                         e.preventDefault();
                         document.open();
                         var html = window.fileStorageFiles[href];
-                        if (/<\/body>/i.test(html)) {
-                            html = html.replace(/<\/body>/i, injectedScript + '</body>');
+                        if (new RegExp('</body>', 'i').test(html)) {
+                            html = html.replace(new RegExp('</body>', 'i'), injectedScript + '</body>');
                         } else {
                             html += injectedScript;
                         }
@@ -345,11 +320,14 @@ async function previewHtml(filePath) {
                 }
                 return el;
             };
-        })();<\/script>
+        })();</script>
     `;
     // Inject the script before </body>
-    if (/<\/body>/i.test(htmlContent)) {
-        htmlContent = htmlContent.replace(/<\/body>/i, injectedScript + '</body>');
+    if (new RegExp('</body>', 'i').test(htmlContent)) {
+        htmlContent = htmlContent.replace(
+            new RegExp('</body>', 'i'),
+            injectedScript + '</body>'
+        );
     } else {
         htmlContent += injectedScript;
     }
@@ -364,20 +342,26 @@ async function previewHtml(filePath) {
 // --- Event Listeners Setup ---
 
 export function setupEditorEventListeners() {
-    editorPanes.forEach(pane => {
+    editorPanes.forEach((pane) => {
         const codeElement = pane.querySelector('pre code');
         const lineNumbersElement = pane.querySelector('.line-numbers');
 
         if (!codeElement || !lineNumbersElement) {
-            console.warn("Skipping event listeners for pane due to missing elements:", pane);
+            console.warn(
+                'Skipping event listeners for pane due to missing elements:',
+                pane
+            );
             return;
         }
 
         // Input event: Save file and update line numbers
         codeElement.addEventListener('input', () => {
-             // Only save if the input event occurred in the currently active pane
+            // Only save if the input event occurred in the currently active pane
             if (pane === activePane) {
-                saveCurrentFileFunc(); 
+                const { activeFile } = getState();
+                if (activeFile) {
+                    updateFileContent(activeFile, codeElement.textContent);
+                }
             }
             updateLineNumbersForPane(pane, lineNumbersElement, codeElement);
         });
@@ -391,26 +375,30 @@ export function setupEditorEventListeners() {
         });
 
         // Update cursor position on click and keyup
-        codeElement.addEventListener('click', () => updateCursorPosition(codeElement));
+        codeElement.addEventListener('click', () =>
+            updateCursorPosition(codeElement)
+        );
         codeElement.addEventListener('keyup', (e) => {
             // Avoid updating cursor position for non-character keys like Shift, Ctrl, Alt
             if (!e.metaKey && !e.ctrlKey && !e.altKey && e.key !== 'Shift') {
-                 updateCursorPosition(codeElement);
+                updateCursorPosition(codeElement);
             }
         });
     });
 
-     // Preview button listener
-     if (previewButton) {
-         previewButton.addEventListener('click', () => {
-             const activeFilePath = activePane ? activePane.dataset.filePath : null;
-             if (activeFilePath) {
-                 previewHtml(activeFilePath);
-             } else {
-                 showAlert('Preview Error', 'No file is active in the editor.');
-             }
-         });
-     } else {
-         console.warn("Preview button not found.");
-     }
-} 
+    // Preview button listener
+    if (previewButton) {
+        previewButton.addEventListener('click', () => {
+            const activeFilePath = activePane
+                ? activePane.dataset.filePath
+                : null;
+            if (activeFilePath) {
+                previewHtml(activeFilePath);
+            } else {
+                showAlert('Preview Error', 'No file is active in the editor.');
+            }
+        });
+    } else {
+        console.warn('Preview button not found.');
+    }
+}

@@ -20,8 +20,14 @@ export function showDiffModal({ filePath, oldContent, newContent }) {
         `;
         document.body.appendChild(modal);
         modal.querySelector('.modal-close').onclick = close;
-        modal.querySelector('.modal-cancel').onclick = () => { close(); resolve(false); };
-        modal.querySelector('.modal-confirm').onclick = () => { close(); resolve(true); };
+        modal.querySelector('.modal-cancel').onclick = () => {
+            close();
+            resolve(false);
+        };
+        modal.querySelector('.modal-confirm').onclick = () => {
+            close();
+            resolve(true);
+        };
         function close() {
             document.body.removeChild(modal);
         }
@@ -29,7 +35,8 @@ export function showDiffModal({ filePath, oldContent, newContent }) {
 }
 
 function diffStringsInline(oldStr, newStr) {
-    if (oldStr === newStr) return '<span style="color: #4caf50">No changes</span>';
+    if (oldStr === newStr)
+        return '<span style="color: #4caf50">No changes</span>';
     const oldLines = oldStr.split('\n');
     const newLines = newStr.split('\n');
     let html = '';
@@ -40,13 +47,18 @@ function diffStringsInline(oldStr, newStr) {
         if (oldLine === newLine) {
             html += `<div style="background:#222;color:#ccc">  ${escapeHtml(oldLine)}</div>`;
         } else {
-            if (oldLine) html += `<div style="background:#2d1a1a;color:#e57373">- ${escapeHtml(oldLine)}</div>`;
-            if (newLine) html += `<div style="background:#1a2d1a;color:#81c784">+ ${escapeHtml(newLine)}</div>`;
+            if (oldLine)
+                html += `<div style="background:#2d1a1a;color:#e57373">- ${escapeHtml(oldLine)}</div>`;
+            if (newLine)
+                html += `<div style="background:#1a2d1a;color:#81c784">+ ${escapeHtml(newLine)}</div>`;
         }
     }
     return html;
 }
 
 function escapeHtml(str) {
-    return str.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-} 
+    return str.replace(
+        /[&<>]/g,
+        (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]
+    );
+}

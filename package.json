@@ -1,18 +1,42 @@
 {
-  "name": "coder-ai",
-  "version": "1.0.0",
-  "description": "A clean, minimal, and elegant coding environment.",
-  "main": "main.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [
-    "ai",
-    "editor",
-    "gemini"
-  ],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {},
-  "devDependencies": {}
+    "name": "coder-ai",
+    "version": "1.0.0",
+    "description": "A clean, minimal, and elegant coding environment.",
+    "main": "main.js",
+    "scripts": {
+        "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "lint": "eslint .",
+        "format": "prettier --write ."
+    },
+    "keywords": [
+        "ai",
+        "editor",
+        "gemini"
+    ],
+    "author": "",
+    "license": "ISC",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/NikitHamal/Coder.git"
+    },
+    "type": "module",
+    "bugs": {
+        "url": "https://github.com/NikitHamal/Coder/issues"
+    },
+    "homepage": "https://github.com/NikitHamal/Coder#readme",
+    "dependencies": {
+        "highlight.js": "^11.11.1",
+        "marked": "^16.1.2"
+    },
+    "devDependencies": {
+        "eslint": "^8.57.1",
+        "http-server": "^14.1.1",
+        "jest": "^30.0.5",
+        "jest-environment-jsdom": "^30.0.5",
+        "prettier": "^3.6.2",
+        "vite": "^7.1.1"
+    }
 }

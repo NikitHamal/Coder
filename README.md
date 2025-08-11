@@ -33,4 +33,4 @@ Simply open `index.html` in your browser to start using Coder.
 - Syntax highlighting for multiple languages
 - Code completion
 - Live collaboration features
-- Customizable themes and settings 
+- Customizable themes and settings

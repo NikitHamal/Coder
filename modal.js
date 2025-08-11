@@ -31,7 +31,9 @@ function showModal(config) {
         // Configure buttons
         modalConfirmBtn.textContent = config.confirmText || 'OK';
         modalCancelBtn.textContent = config.cancelText || 'Cancel';
-        modalCancelBtn.style.display = config.hideCancel ? 'none' : 'inline-block';
+        modalCancelBtn.style.display = config.hideCancel
+            ? 'none'
+            : 'inline-block';
 
         // Show modal & backdrop directly
         modalBackdrop.style.display = 'flex';
@@ -42,7 +44,7 @@ function showModal(config) {
             modalInput.select(); // Select existing text
         } else {
             // Focus the confirm button if no input
-             modalConfirmBtn.focus();
+            modalConfirmBtn.focus();
         }
     });
 }
@@ -79,27 +81,38 @@ modalInput.addEventListener('keydown', (e) => {
 
 // Allow Enter on buttons, and Escape globally when modal is open
 modalDialog.addEventListener('keydown', (e) => {
-     if (modalBackdrop.style.display === 'flex') {
-         if (e.key === 'Escape') {
-             closeModal(false);
-         } else if (e.key === 'Enter' && document.activeElement === modalConfirmBtn) {
-             closeModal(true);
-         } else if (e.key === 'Enter' && document.activeElement === modalCancelBtn) {
-             closeModal(false);
-         }
-     }
+    if (modalBackdrop.style.display === 'flex') {
+        if (e.key === 'Escape') {
+            closeModal(false);
+        } else if (
+            e.key === 'Enter' &&
+            document.activeElement === modalConfirmBtn
+        ) {
+            closeModal(true);
+        } else if (
+            e.key === 'Enter' &&
+            document.activeElement === modalCancelBtn
+        ) {
+            closeModal(false);
+        }
+    }
 });
 
-
 // Wrapper for prompt using custom modal
-export async function showPrompt(title, message, defaultValue = '', placeholder = '') {
+export async function showPrompt(
+    title,
+    message,
+    defaultValue = '',
+    placeholder = ''
+) {
     return await showModal({
         title: title,
         message: message,
         showInput: true,
         defaultValue: defaultValue,
         placeholder: placeholder,
-        confirmText: 'OK',        cancelText: 'Cancel'
+        confirmText: 'OK',
+        cancelText: 'Cancel',
     });
 }
 
@@ -110,7 +123,7 @@ export async function showConfirm(title, message) {
         message: message,
         showInput: false,
         confirmText: 'Yes', // More explicit for confirm
-        cancelText: 'No'
+        cancelText: 'No',
     });
 }
 
@@ -122,6 +135,6 @@ export async function showAlert(title, message) {
         message: message,
         showInput: false,
         confirmText: 'OK',
-        hideCancel: true // Only show OK button
+        hideCancel: true, // Only show OK button
     });
-} 
+}

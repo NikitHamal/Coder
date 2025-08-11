@@ -1,7 +1,9 @@
-import { fileStorage } from './fileStorage.js';
-import { showPrompt, showConfirm, showAlert } from './modal.js';
+import { marked } from 'marked';
 import { gatherContext } from './codebaseContext.js';
-import { handleAgenticActions, setAgentActionDependencies } from './agentActions.js';
+import {
+    handleAgenticActions,
+    setAgentActionDependencies,
+} from './agentActions.js';
 import { gemini } from './gemini.js';
 
 let initializeUI, selectFile;
@@ -42,7 +44,9 @@ function addMessageToUI(role, content) {
             </div>
             <div class="main-message-content"></div>
         `;
-        messageDiv.querySelector('.main-message-content').appendChild(paragraph);
+        messageDiv
+            .querySelector('.main-message-content')
+            .appendChild(paragraph);
     }
 
     messagesContainer.appendChild(messageDiv);
@@ -50,10 +54,17 @@ function addMessageToUI(role, content) {
     return messageDiv;
 }
 
-function updateAssistantMessageUI(messageDiv, { planning, webResults, finalContent }) {
+function updateAssistantMessageUI(
+    messageDiv,
+    { planning, webResults, finalContent }
+) {
     if (!messageDiv || typeof marked === 'undefined') {
-        if (!messageDiv) console.error("updateAssistantMessageUI called with null messageDiv");
-        if (typeof marked === 'undefined') console.error("marked.js is not available");
+        if (!messageDiv)
+            console.error(
+                'updateAssistantMessageUI called with null messageDiv'
+            );
+        if (typeof marked === 'undefined')
+            console.error('marked.js is not available');
         return;
     }
 
@@ -64,8 +75,17 @@ function updateAssistantMessageUI(messageDiv, { planning, webResults, finalConte
     const webResultsList = webResultsSection?.querySelector('ul');
     const mainContent = messageDiv.querySelector('.main-message-content');
 
-    if (!planningSection || !planningContent || !toggleButton || !webResultsSection || !webResultsList || !mainContent) {
-        console.error("One or more UI elements missing in assistant message structure.");
+    if (
+        !planningSection ||
+        !planningContent ||
+        !toggleButton ||
+        !webResultsSection ||
+        !webResultsList ||
+        !mainContent
+    ) {
+        console.error(
+            'One or more UI elements missing in assistant message structure.'
+        );
         return;
     }
 
@@ -77,7 +97,9 @@ function updateAssistantMessageUI(messageDiv, { planning, webResults, finalConte
         toggleButton.onclick = () => {
             const isHidden = planningContent.style.display === 'none';
             planningContent.style.display = isHidden ? 'block' : 'none';
-            toggleButton.textContent = isHidden ? 'Hide Planning' : 'Show Planning';
+            toggleButton.textContent = isHidden
+                ? 'Hide Planning'
+                : 'Show Planning';
         };
     } else {
         planningSection.style.display = 'none';
@@ -85,7 +107,7 @@ function updateAssistantMessageUI(messageDiv, { planning, webResults, finalConte
 
     if (webResults && webResults.length > 0) {
         webResultsList.innerHTML = '';
-        webResults.forEach(result => {
+        webResults.forEach((result) => {
             const li = document.createElement('li');
             li.innerHTML = `<a href="${result.url}" target="_blank" title="${result.snippet || ''}">${result.title || result.url}</a> ${result.date || ''}`;
             webResultsList.appendChild(li);
@@ -99,7 +121,7 @@ function updateAssistantMessageUI(messageDiv, { planning, webResults, finalConte
         try {
             mainContent.innerHTML = marked.parse(finalContent);
         } catch (e) {
-            console.error("Error parsing Markdown:", e);
+            console.error('Error parsing Markdown:', e);
             mainContent.textContent = finalContent;
         }
     } else {
@@ -111,10 +133,12 @@ async function sendChatMessage() {
     const inputElement = document.querySelector('.ai-input');
     const modeSelectElement = document.getElementById('ai-mode-select');
     const modelSelectElement = document.getElementById('ai-model-select');
-    const activePane = document.querySelector('.editor-pane.active') || document.querySelector('.editor-pane:first-child');
+    const activePane =
+        document.querySelector('.editor-pane.active') ||
+        document.querySelector('.editor-pane:first-child');
 
     if (!inputElement || !modeSelectElement || !modelSelectElement) {
-        console.error("AI input, mode selector, or model selector not found.");
+        console.error('AI input, mode selector, or model selector not found.');
         return;
     }
     let message = inputElement.value.trim();
@@ -124,7 +148,9 @@ async function sendChatMessage() {
     try {
         localStorage.setItem('coder_ai_mode', selectedMode);
         localStorage.setItem('coder_ai_model', selectedModelId);
-    } catch (e) { /* no-op */ }
+    } catch (_e) {
+        // Silently fail if localStorage is unavailable (e.g., in private browsing mode)
+    }
 
     if (!message) return;
 
@@ -147,38 +173,65 @@ async function sendChatMessage() {
             if (codeElement) {
                 activeFileContent = codeElement.textContent;
             } else {
-                console.warn(`Could not find code element in active pane for path: ${activeFilePath}`);
+                console.warn(
+                    `Could not find code element in active pane for path: ${activeFilePath}`
+                );
             }
         }
         workspaceContext = gatherContext(activeFilePath, activeFileContent);
     }
 
     try {
-        await getGeminiResponse(messageToSend, currentAssistantMessageDiv, selectedMode, selectedModelId, workspaceContext);
+        await getGeminiResponse(
+            messageToSend,
+            currentAssistantMessageDiv,
+            selectedMode,
+            selectedModelId,
+            workspaceContext
+        );
     } catch (error) {
         console.error('Error communicating with Gemini API:', error);
         if (currentAssistantMessageDiv) {
-            updateAssistantMessageUI(currentAssistantMessageDiv, { finalContent: `Error: ${error.message}` });
+            updateAssistantMessageUI(currentAssistantMessageDiv, {
+                finalContent: `Error: ${error.message}`,
+            });
             currentAssistantMessageDiv.classList.add('error-message');
         }
         currentAssistantMessageDiv = null;
     }
 }
 
-async function getGeminiResponse(message, assistantMessageDiv, mode, modelId, workspaceContext) {
+async function getGeminiResponse(
+    message,
+    assistantMessageDiv,
+    mode,
+    modelId,
+    workspaceContext
+) {
     const messagesContainer = document.querySelector('.ai-messages-container');
     if (assistantMessageDiv) {
-        const mainContent = assistantMessageDiv.querySelector('.main-message-content');
+        const mainContent = assistantMessageDiv.querySelector(
+            '.main-message-content'
+        );
         if (mainContent) mainContent.textContent = '';
     }
 
     // Prefer function calling workflow in write mode
     if (mode === 'write') {
         try {
-            await handleWriteModeWithFunctionCalling({ message, assistantMessageDiv, modelId, workspaceContext, messagesContainer });
+            await handleWriteModeWithFunctionCalling({
+                message,
+                assistantMessageDiv,
+                modelId,
+                workspaceContext,
+                messagesContainer,
+            });
             return;
-        } catch (e) {
-            console.warn('Function calling failed, falling back to JSON instructions. Error:', e);
+        } catch (_e) {
+            console.warn(
+                'Function calling failed, falling back to JSON instructions. Error:',
+                _e
+            );
         }
     }
 
@@ -200,6 +253,7 @@ async function getGeminiResponse(message, assistantMessageDiv, mode, modelId, wo
     let fullResponseContent = '';
 
     try {
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -209,12 +263,18 @@ async function getGeminiResponse(message, assistantMessageDiv, mode, modelId, wo
             // Try parse the whole buffer as a single JSON array
             try {
                 const jsonArray = JSON.parse(buffer);
-                fullResponseContent = jsonArray.map(item => item.candidates[0].content.parts[0].text).join('');
-                updateAssistantMessageUI(assistantMessageDiv, { finalContent: fullResponseContent });
-                if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                fullResponseContent = jsonArray
+                    .map((item) => item.candidates[0].content.parts[0].text)
+                    .join('');
+                updateAssistantMessageUI(assistantMessageDiv, {
+                    finalContent: fullResponseContent,
+                });
+                if (messagesContainer)
+                    messagesContainer.scrollTop =
+                        messagesContainer.scrollHeight;
                 continue; // Move to the next chunk
-            } catch (e) {
-                // Fallback to parse as event stream lines
+            } catch (_) {
+                // This is expected to fail when the buffer is not a complete JSON object yet
             }
 
             const lines = buffer.split('\n');
@@ -223,21 +283,31 @@ async function getGeminiResponse(message, assistantMessageDiv, mode, modelId, wo
                     const dataStr = line.substring(5).trim();
                     try {
                         const jsonData = JSON.parse(dataStr);
-                        if (jsonData.candidates && jsonData.candidates.length > 0) {
-                            const content = jsonData.candidates[0].content.parts[0].text;
+                        if (
+                            jsonData.candidates &&
+                            jsonData.candidates.length > 0
+                        ) {
+                            const content =
+                                jsonData.candidates[0].content.parts[0].text;
                             fullResponseContent += content;
-                            updateAssistantMessageUI(assistantMessageDiv, { finalContent: fullResponseContent });
-                            if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                            updateAssistantMessageUI(assistantMessageDiv, {
+                                finalContent: fullResponseContent,
+                            });
+                            if (messagesContainer)
+                                messagesContainer.scrollTop =
+                                    messagesContainer.scrollHeight;
                         }
-                    } catch (e) {
-                        // Ignore parsing errors for incomplete JSON
+                    } catch (_) {
+                        // Ignore parsing errors for incomplete JSON, as the stream is partial
                     }
                 }
             }
         }
     } finally {
         if (!reader.closed) {
-            reader.cancel().catch(e => console.warn("Error cancelling reader:", e));
+            reader
+                .cancel()
+                .catch((e) => console.warn('Error cancelling reader:', e));
         }
     }
 
@@ -245,13 +315,17 @@ async function getGeminiResponse(message, assistantMessageDiv, mode, modelId, wo
     // Let's try to parse it.
     try {
         const jsonArray = JSON.parse(buffer);
-        fullResponseContent = jsonArray.map(item => item.candidates[0].content.parts[0].text).join('');
-        updateAssistantMessageUI(assistantMessageDiv, { finalContent: fullResponseContent });
-        if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    } catch(e) {
-        // Ignore if the final buffer is not a valid JSON.
+        fullResponseContent = jsonArray
+            .map((item) => item.candidates[0].content.parts[0].text)
+            .join('');
+        updateAssistantMessageUI(assistantMessageDiv, {
+            finalContent: fullResponseContent,
+        });
+        if (messagesContainer)
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    } catch (_) {
+        // Ignore if the final buffer is not a valid JSON, which can happen.
     }
-
 
     const finalTrimmedContent = fullResponseContent.trim();
     let agenticActions = null;
@@ -260,31 +334,48 @@ async function getGeminiResponse(message, assistantMessageDiv, mode, modelId, wo
     const jsonFenceStart = '```json\n';
     const jsonFenceEnd = '\n```';
 
-    if (mode === 'write' && finalTrimmedContent.startsWith(jsonFenceStart) && finalTrimmedContent.endsWith(jsonFenceEnd)) {
-        const potentialJson = finalTrimmedContent.substring(jsonFenceStart.length, finalTrimmedContent.length - jsonFenceEnd.length);
+    if (
+        mode === 'write' &&
+        finalTrimmedContent.startsWith(jsonFenceStart) &&
+        finalTrimmedContent.endsWith(jsonFenceEnd)
+    ) {
+        const potentialJson = finalTrimmedContent.substring(
+            jsonFenceStart.length,
+            finalTrimmedContent.length - jsonFenceEnd.length
+        );
         try {
             const parsedResponse = JSON.parse(potentialJson);
-            if (parsedResponse && Array.isArray(parsedResponse.actions) && typeof parsedResponse.explanation === 'string') {
+            if (
+                parsedResponse &&
+                Array.isArray(parsedResponse.actions) &&
+                typeof parsedResponse.explanation === 'string'
+            ) {
                 agenticActions = parsedResponse.actions;
                 explanation = parsedResponse.explanation;
             } else {
-                explanation = "⚠️ Error: The response format does not match expected structure. Please try again.";
+                explanation =
+                    '⚠️ Error: The response format does not match expected structure. Please try again.';
             }
-        } catch (e) {
-            explanation = "⚠️ Error: Could not parse the AI response as valid JSON. Please try again.\nRaw content was:\n" + finalTrimmedContent;
+        } catch (_e) {
+            explanation =
+                '⚠️ Error: Could not parse the AI response as valid JSON. Please try again.\nRaw content was:\n' +
+                finalTrimmedContent;
         }
     }
 
     updateAssistantMessageUI(assistantMessageDiv, {
-        finalContent: explanation
+        finalContent: explanation,
     });
 
     if (agenticActions) {
         try {
             await handleAgenticActions(agenticActions);
         } catch (error) {
-            console.error("Error executing agentic actions:", error);
-            addMessageToUI('assistant', `Error executing actions: ${error.message}`);
+            console.error('Error executing agentic actions:', error);
+            addMessageToUI(
+                'assistant',
+                `Error executing actions: ${error.message}`
+            );
         }
     }
 
@@ -295,7 +386,13 @@ async function getGeminiResponse(message, assistantMessageDiv, mode, modelId, wo
 }
 
 // --- Function calling powered Write mode ---
-async function handleWriteModeWithFunctionCalling({ message, assistantMessageDiv, modelId, workspaceContext, messagesContainer }) {
+async function handleWriteModeWithFunctionCalling({
+    message,
+    assistantMessageDiv,
+    modelId,
+    workspaceContext,
+    messagesContainer,
+}) {
     const functionDeclarations = [
         {
             name: 'create_file',
@@ -303,11 +400,14 @@ async function handleWriteModeWithFunctionCalling({ message, assistantMessageDiv
             parameters: {
                 type: 'OBJECT',
                 properties: {
-                    path: { type: 'STRING', description: 'Path including file name' },
-                    content: { type: 'STRING', description: 'File contents' }
+                    path: {
+                        type: 'STRING',
+                        description: 'Path including file name',
+                    },
+                    content: { type: 'STRING', description: 'File contents' },
                 },
-                required: ['path', 'content']
-            }
+                required: ['path', 'content'],
+            },
         },
         {
             name: 'modify_file',
@@ -316,10 +416,10 @@ async function handleWriteModeWithFunctionCalling({ message, assistantMessageDiv
                 type: 'OBJECT',
                 properties: {
                     path: { type: 'STRING' },
-                    content: { type: 'STRING' }
+                    content: { type: 'STRING' },
                 },
-                required: ['path', 'content']
-            }
+                required: ['path', 'content'],
+            },
         },
         {
             name: 'create_folder',
@@ -327,8 +427,8 @@ async function handleWriteModeWithFunctionCalling({ message, assistantMessageDiv
             parameters: {
                 type: 'OBJECT',
                 properties: { path: { type: 'STRING' } },
-                required: ['path']
-            }
+                required: ['path'],
+            },
         },
         {
             name: 'delete_file',
@@ -336,37 +436,51 @@ async function handleWriteModeWithFunctionCalling({ message, assistantMessageDiv
             parameters: {
                 type: 'OBJECT',
                 properties: { path: { type: 'STRING' } },
-                required: ['path']
-            }
+                required: ['path'],
+            },
         },
         {
             name: 'rename_file',
             description: 'Rename or move a file from path to new_path',
             parameters: {
                 type: 'OBJECT',
-                properties: { path: { type: 'STRING' }, new_path: { type: 'STRING' } },
-                required: ['path', 'new_path']
-            }
+                properties: {
+                    path: { type: 'STRING' },
+                    new_path: { type: 'STRING' },
+                },
+                required: ['path', 'new_path'],
+            },
         },
         {
             name: 'copy_file',
             description: 'Copy a file from path to new_path',
             parameters: {
                 type: 'OBJECT',
-                properties: { path: { type: 'STRING' }, new_path: { type: 'STRING' } },
-                required: ['path', 'new_path']
-            }
-        }
+                properties: {
+                    path: { type: 'STRING' },
+                    new_path: { type: 'STRING' },
+                },
+                required: ['path', 'new_path'],
+            },
+        },
     ];
 
-    const systemPreamble = `You are an autonomous coding agent with direct file access tools. Prefer calling the provided functions to make changes. Provide concise rationale as plain text also.`;
+    const systemPreamble = 'You are an autonomous coding agent with direct file access tools. Prefer calling the provided functions to make changes. Provide concise rationale as plain text also.';
     const userContent = `User request: ${message}\n\nWorkspace Context:\n${workspaceContext || '[No context]'}`;
 
     const contents = [
-        { role: 'user', parts: [{ text: systemPreamble + '\n\n' + userContent }] }
+        {
+            role: 'user',
+            parts: [{ text: systemPreamble + '\n\n' + userContent }],
+        },
     ];
 
-    const res = await gemini.generateWithTools({ contents, tools: functionDeclarations, model: modelId, streaming: false });
+    const res = await gemini.generateWithTools({
+        contents,
+        tools: functionDeclarations,
+        model: modelId,
+        streaming: false,
+    });
 
     let explanationText = '';
     const actions = [];
@@ -378,18 +492,28 @@ async function handleWriteModeWithFunctionCalling({ message, assistantMessageDiv
             const fc = part.functionCall || part.function_call; // handle variants
             if (fc && fc.name) {
                 let args = {};
-                try { args = typeof fc.args === 'string' ? JSON.parse(fc.args) : (fc.args || {}); } catch {}
+                try {
+                    args =
+                        typeof fc.args === 'string'
+                            ? JSON.parse(fc.args)
+                            : fc.args || {};
+                } catch (_) {
+                    // Ignore errors if args are not valid JSON
+                }
                 const action = mapFunctionCallToAction(fc.name, args);
                 if (action) actions.push(action);
             }
         }
-    } catch (e) {
-        console.warn('Failed to parse function call response', e);
+    } catch (_e) {
+        console.warn('Failed to parse function call response', _e);
     }
 
     if (assistantMessageDiv) {
-        updateAssistantMessageUI(assistantMessageDiv, { finalContent: explanationText || 'Applying changes...' });
-        if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        updateAssistantMessageUI(assistantMessageDiv, {
+            finalContent: explanationText || 'Applying changes...',
+        });
+        if (messagesContainer)
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
     if (actions.length > 0) {
@@ -399,20 +523,36 @@ async function handleWriteModeWithFunctionCalling({ message, assistantMessageDiv
 
 function mapFunctionCallToAction(name, args) {
     switch (name) {
-        case 'create_file':
-            return { type: 'create_file', path: args.path, content: String(args.content || '') };
-        case 'modify_file':
-            return { type: 'modify_file', path: args.path, content: String(args.content || '') };
-        case 'create_folder':
-            return { type: 'create_folder', path: args.path };
-        case 'delete_file':
-            return { type: 'delete_file', path: args.path };
-        case 'rename_file':
-            return { type: 'rename_file', path: args.path, new_path: args.new_path };
-        case 'copy_file':
-            return { type: 'copy_file', path: args.path, new_path: args.new_path };
-        default:
-            return null;
+    case 'create_file':
+        return {
+            type: 'create_file',
+            path: args.path,
+            content: String(args.content || ''),
+        };
+    case 'modify_file':
+        return {
+            type: 'modify_file',
+            path: args.path,
+            content: String(args.content || ''),
+        };
+    case 'create_folder':
+        return { type: 'create_folder', path: args.path };
+    case 'delete_file':
+        return { type: 'delete_file', path: args.path };
+    case 'rename_file':
+        return {
+            type: 'rename_file',
+            path: args.path,
+            new_path: args.new_path,
+        };
+    case 'copy_file':
+        return {
+            type: 'copy_file',
+            path: args.path,
+            new_path: args.new_path,
+        };
+    default:
+        return null;
     }
 }
 
@@ -475,11 +615,19 @@ export function setupAIChatEventListeners() {
             }
         });
     } else {
-         console.error("Could not find AI send button or input field to attach listeners.");
+        console.error(
+            'Could not find AI send button or input field to attach listeners.'
+        );
     }
 }
 
-export function addDiffToUI(filePath, oldContent, newContent, onApprove, onReject) {
+export function addDiffToUI(
+    filePath,
+    oldContent,
+    newContent,
+    onApprove,
+    onReject
+) {
     const messagesContainer = document.querySelector('.ai-messages-container');
     if (!messagesContainer) return;
 
@@ -508,13 +656,15 @@ export function addDiffToUI(filePath, oldContent, newContent, onApprove, onRejec
             if (oldLine === newLine) {
                 diffHtml += `<div class="diff-same">  ${escapeHtml(oldLine)}</div>`;
             } else {
-                if (oldLine) diffHtml += `<div class="diff-del">- ${escapeHtml(oldLine)}</div>`;
-                if (newLine) diffHtml += `<div class="diff-add">+ ${escapeHtml(newLine)}</div>`;
+                if (oldLine)
+                    diffHtml += `<div class="diff-del">- ${escapeHtml(oldLine)}</div>`;
+                if (newLine)
+                    diffHtml += `<div class="diff-add">+ ${escapeHtml(newLine)}</div>`;
             }
         }
     }
 
-    diffHtml += `</pre></div>`;
+    diffHtml += '</pre></div>';
 
     diffMessage.innerHTML = diffHtml;
     messagesContainer.appendChild(diffMessage);
@@ -522,17 +672,22 @@ export function addDiffToUI(filePath, oldContent, newContent, onApprove, onRejec
 
     diffMessage.querySelector('.diff-approve').addEventListener('click', () => {
         if (onApprove) onApprove();
-        diffMessage.querySelector('.diff-actions').innerHTML = '<span style="color: #81c784"><i class="material-icons">check_circle</i> Changes approved</span>';
+        diffMessage.querySelector('.diff-actions').innerHTML =
+            '<span style="color: #81c784"><i class="material-icons">check_circle</i> Changes approved</span>';
     });
 
     diffMessage.querySelector('.diff-reject').addEventListener('click', () => {
         if (onReject) onReject();
-        diffMessage.querySelector('.diff-actions').innerHTML = '<span style="color: #e57373"><i class="material-icons">cancel</i> Changes discarded</span>';
+        diffMessage.querySelector('.diff-actions').innerHTML =
+            '<span style="color: #e57373"><i class="material-icons">cancel</i> Changes discarded</span>';
     });
 }
 
 function escapeHtml(str) {
-    return str.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+    return str.replace(
+        /[&<>]/g,
+        (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]
+    );
 }
 
 export function addFileOperationMessage(message, isSuccess = true) {
@@ -547,4 +702,4 @@ export function addFileOperationMessage(message, isSuccess = true) {
 
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-} 
+}
