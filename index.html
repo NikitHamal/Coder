@@ -151,7 +151,8 @@
             <div class="editor-container">
                 <div class="editor-pane active" data-file-path="index.html">
                     <div class="editor">
-                        <pre><code class="language-html">&lt;!DOCTYPE html&gt;
+                        <div class="line-numbers"></div>
+                        <pre><code class="language-html" contenteditable="true" spellcheck="false">&lt;!DOCTYPE html&gt;
 &lt;html&gt;
 &lt;head&gt;
     &lt;title&gt;Hello World&lt;/title&gt;
@@ -170,10 +171,13 @@
                 <div class="status-left">
                     <span class="cursor-position">Ln 1, Col 1</span>
                     <span class="file-size">0 B</span>
+                    <span class="file-type">-</span>
                 </div>
                 <div class="status-right">
                     <span class="encoding">UTF-8</span>
                     <span class="language">HTML</span>
+                    <span class="tab-size">Spaces: 4</span>
+                    <span class="lint-status">0 Problems</span>
                 </div>
             </div>
         </div>
@@ -222,12 +226,38 @@
                             <option value="explain">📚 Explain</option>
                         </select>
                         <select id="ai-model-select" class="ai-control-select" title="AI Model">
-                            <option value="g4f">🚀 GPT4Free (g4f)</option>
-                            <option value="deepseek">🔍 DeepSeek</option>
-                            <option value="openai">🤖 OpenAI (Free)</option>
-                            <option value="anthropic">🧠 Claude (Free)</option>
-                            <option value="gemini-2.5-flash">⭐ Gemini 2.5 Flash</option>
-                            <option value="gemini-2.5-pro">⭐ Gemini 2.5 Pro</option>
+                            <optgroup label="🚀 GPT Models (Free)">
+                                <option value="g4f-gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                <option value="g4f-gpt-4">GPT-4</option>
+                                <option value="g4f-gpt-4-turbo">GPT-4 Turbo</option>
+                                <option value="g4f-gpt-4o">GPT-4o</option>
+                                <option value="g4f-gpt-4o-mini">GPT-4o Mini</option>
+                            </optgroup>
+                            <optgroup label="🔍 DeepSeek Models (Free)">
+                                <option value="deepseek-chat">DeepSeek Chat</option>
+                                <option value="deepseek-coder">DeepSeek Coder</option>
+                            </optgroup>
+                            <optgroup label="🧠 Claude Models (Free)">
+                                <option value="claude-3-haiku">Claude 3 Haiku</option>
+                                <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                                <option value="claude-3-opus">Claude 3 Opus</option>
+                            </optgroup>
+                            <optgroup label="🦙 Meta Models (Free)">
+                                <option value="llama-3-8b">Llama 3 8B</option>
+                                <option value="llama-3-70b">Llama 3 70B</option>
+                            </optgroup>
+                            <optgroup label="🌪️ Mistral Models (Free)">
+                                <option value="mistral-7b">Mistral 7B</option>
+                                <option value="mistral-large">Mistral Large</option>
+                            </optgroup>
+                            <optgroup label="💻 Coding Models (Free)">
+                                <option value="huggingface-codellama">Code Llama</option>
+                                <option value="cohere-command">Cohere Command</option>
+                            </optgroup>
+                            <optgroup label="⭐ Premium Models (API Key Required)">
+                                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                            </optgroup>
                         </select>
                     </div>
                     <div class="ai-input-wrapper">

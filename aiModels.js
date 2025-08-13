@@ -3,39 +3,103 @@ import { showAlert } from './modal.js';
 class AIModels {
     constructor() {
         this.models = {
-            // Free models from gpt4free
-            'g4f': {
-                name: 'GPT4Free (g4f)',
-                description: 'Free GPT models via g4f.js',
+            // GPT4Free Models (Primary - No API Key Required)
+            'g4f-gpt-3.5-turbo': {
+                name: 'GPT-3.5 Turbo (Free)',
+                description: 'OpenAI GPT-3.5 Turbo via g4f',
                 type: 'g4f',
                 available: true,
                 maxTokens: 4096,
-                supportsStreaming: true
+                supportsStreaming: true,
+                category: 'GPT'
             },
-            'deepseek': {
-                name: 'DeepSeek',
-                description: 'Free DeepSeek models',
+            'g4f-gpt-4': {
+                name: 'GPT-4 (Free)',
+                description: 'OpenAI GPT-4 via g4f',
+                type: 'g4f',
+                available: true,
+                maxTokens: 8192,
+                supportsStreaming: true,
+                category: 'GPT'
+            },
+            'g4f-gpt-4-turbo': {
+                name: 'GPT-4 Turbo (Free)',
+                description: 'OpenAI GPT-4 Turbo via g4f',
+                type: 'g4f',
+                available: true,
+                maxTokens: 128000,
+                supportsStreaming: true,
+                category: 'GPT'
+            },
+            'g4f-gpt-4o': {
+                name: 'GPT-4o (Free)',
+                description: 'OpenAI GPT-4o via g4f',
+                type: 'g4f',
+                available: true,
+                maxTokens: 128000,
+                supportsStreaming: true,
+                category: 'GPT'
+            },
+            'g4f-gpt-4o-mini': {
+                name: 'GPT-4o Mini (Free)',
+                description: 'OpenAI GPT-4o Mini via g4f',
+                type: 'g4f',
+                available: true,
+                maxTokens: 128000,
+                supportsStreaming: true,
+                category: 'GPT'
+            },
+
+            // DeepSeek Models
+            'deepseek-chat': {
+                name: 'DeepSeek Chat',
+                description: 'DeepSeek Chat model (Free)',
                 type: 'deepseek',
                 available: true,
-                maxTokens: 4096,
-                supportsStreaming: true
+                maxTokens: 32768,
+                supportsStreaming: true,
+                category: 'DeepSeek'
             },
-            'openai': {
-                name: 'OpenAI (Free)',
-                description: 'Free OpenAI models via g4f',
-                type: 'openai',
+            'deepseek-coder': {
+                name: 'DeepSeek Coder',
+                description: 'DeepSeek Coder model (Free)',
+                type: 'deepseek',
                 available: true,
-                maxTokens: 4096,
-                supportsStreaming: true
+                maxTokens: 16384,
+                supportsStreaming: true,
+                category: 'DeepSeek'
             },
-            'anthropic': {
-                name: 'Anthropic (Free)',
-                description: 'Free Claude models via g4f',
+
+            // Anthropic Claude Models
+            'claude-3-haiku': {
+                name: 'Claude 3 Haiku (Free)',
+                description: 'Anthropic Claude 3 Haiku via g4f',
                 type: 'anthropic',
                 available: true,
-                maxTokens: 4096,
-                supportsStreaming: true
+                maxTokens: 200000,
+                supportsStreaming: true,
+                category: 'Claude'
             },
+            'claude-3-sonnet': {
+                name: 'Claude 3 Sonnet (Free)',
+                description: 'Anthropic Claude 3 Sonnet via g4f',
+                type: 'anthropic',
+                available: true,
+                maxTokens: 200000,
+                supportsStreaming: true,
+                category: 'Claude'
+            },
+            'claude-3-opus': {
+                name: 'Claude 3 Opus (Free)',
+                description: 'Anthropic Claude 3 Opus via g4f',
+                type: 'anthropic',
+                available: true,
+                maxTokens: 200000,
+                supportsStreaming: true,
+                category: 'Claude'
+            },
+
+            // Google Gemini Models (Requires API Key)
             'gemini-2.5-flash': {
                 name: 'Gemini 2.5 Flash',
                 description: 'Google Gemini 2.5 Flash (requires API key)',
@@ -43,7 +107,8 @@ class AIModels {
                 available: false,
                 maxTokens: 8192,
                 supportsStreaming: true,
-                requiresApiKey: true
+                requiresApiKey: true,
+                category: 'Gemini'
             },
             'gemini-2.5-pro': {
                 name: 'Gemini 2.5 Pro',
@@ -52,11 +117,85 @@ class AIModels {
                 available: false,
                 maxTokens: 8192,
                 supportsStreaming: true,
-                requiresApiKey: true
+                requiresApiKey: true,
+                category: 'Gemini'
+            },
+
+            // Meta Models
+            'llama-3-8b': {
+                name: 'Llama 3 8B (Free)',
+                description: 'Meta Llama 3 8B via g4f',
+                type: 'g4f',
+                available: true,
+                maxTokens: 8192,
+                supportsStreaming: true,
+                category: 'Meta'
+            },
+            'llama-3-70b': {
+                name: 'Llama 3 70B (Free)',
+                description: 'Meta Llama 3 70B via g4f',
+                type: 'g4f',
+                available: true,
+                maxTokens: 8192,
+                supportsStreaming: true,
+                category: 'Meta'
+            },
+
+            // Mistral Models
+            'mistral-7b': {
+                name: 'Mistral 7B (Free)',
+                description: 'Mistral 7B model via g4f',
+                type: 'g4f',
+                available: true,
+                maxTokens: 8192,
+                supportsStreaming: true,
+                category: 'Mistral'
+            },
+            'mistral-large': {
+                name: 'Mistral Large (Free)',
+                description: 'Mistral Large model via g4f',
+                type: 'g4f',
+                available: true,
+                maxTokens: 32768,
+                supportsStreaming: true,
+                category: 'Mistral'
+            },
+
+            // Cohere Models
+            'cohere-command': {
+                name: 'Cohere Command (Free)',
+                description: 'Cohere Command model via g4f',
+                type: 'g4f',
+                available: true,
+                maxTokens: 4096,
+                supportsStreaming: true,
+                category: 'Cohere'
+            },
+
+            // Perplexity Models
+            'perplexity-sonar': {
+                name: 'Perplexity Sonar (Free)',
+                description: 'Perplexity Sonar model via g4f',
+                type: 'g4f',
+                available: true,
+                maxTokens: 4096,
+                supportsStreaming: true,
+                category: 'Perplexity'
+            },
+
+            // HuggingFace Models
+            'huggingface-codellama': {
+                name: 'Code Llama (Free)',
+                description: 'HuggingFace Code Llama via g4f',
+                type: 'g4f',
+                available: true,
+                maxTokens: 16384,
+                supportsStreaming: true,
+                category: 'HuggingFace'
             }
         };
         
-        this.currentModel = 'g4f';
+        this.currentModel = 'g4f-gpt-3.5-turbo';
         this.initializeG4F();
     }
 
@@ -98,6 +237,19 @@ class AIModels {
             .map(([key, model]) => ({ key, ...model }));
     }
 
+    getModelsByCategory() {
+        const categories = {};
+        Object.entries(this.models).forEach(([key, model]) => {
+            if (model.available) {
+                if (!categories[model.category]) {
+                    categories[model.category] = [];
+                }
+                categories[model.category].push({ key, ...model });
+            }
+        });
+        return categories;
+    }
+
     getCurrentModel() {
         return this.models[this.currentModel];
     }
@@ -124,9 +276,9 @@ class AIModels {
         try {
             switch (model.type) {
                 case 'g4f':
-                    return await this.generateWithG4F(prompt, options);
+                    return await this.generateWithG4F(prompt, modelKey, options);
                 case 'gemini':
-                    return await this.generateWithGemini(prompt, model.key, options);
+                    return await this.generateWithGemini(prompt, modelKey, options);
                 default:
                     throw new Error(`Unsupported model type: ${model.type}`);
             }
@@ -136,13 +288,29 @@ class AIModels {
         }
     }
 
-    async generateWithG4F(prompt, options = {}) {
+    async generateWithG4F(prompt, modelKey, options = {}) {
         if (typeof window.g4f === 'undefined') {
             await this.waitForG4F();
         }
 
+        // Map our model keys to actual g4f model names
+        const modelMapping = {
+            'g4f-gpt-3.5-turbo': 'gpt-3.5-turbo',
+            'g4f-gpt-4': 'gpt-4',
+            'g4f-gpt-4-turbo': 'gpt-4-turbo',
+            'g4f-gpt-4o': 'gpt-4o',
+            'g4f-gpt-4o-mini': 'gpt-4o-mini',
+            'llama-3-8b': 'llama-3-8b',
+            'llama-3-70b': 'llama-3-70b',
+            'mistral-7b': 'mistral-7b',
+            'mistral-large': 'mistral-large',
+            'cohere-command': 'cohere-command',
+            'perplexity-sonar': 'perplexity-sonar',
+            'huggingface-codellama': 'codellama-7b-instruct'
+        };
+
+        const actualModel = modelMapping[modelKey] || 'gpt-3.5-turbo';
         const {
-            model = 'gpt-3.5-turbo',
             temperature = 0.7,
             maxTokens = 4096,
             streaming = false
@@ -150,9 +318,9 @@ class AIModels {
 
         try {
             if (streaming) {
-                return await this.streamWithG4F(prompt, model, temperature, maxTokens);
+                return await this.streamWithG4F(prompt, actualModel, temperature, maxTokens);
             } else {
-                return await this.nonStreamWithG4F(prompt, model, temperature, maxTokens);
+                return await this.nonStreamWithG4F(prompt, actualModel, temperature, maxTokens);
             }
         } catch (error) {
             throw new Error(`G4F generation failed: ${error.message}`);
@@ -269,13 +437,26 @@ class AIModels {
     // Get recommended models for different use cases
     getRecommendedModels(useCase) {
         const recommendations = {
-            'coding': ['g4f', 'deepseek', 'gemini-2.5-flash'],
-            'writing': ['g4f', 'anthropic', 'openai'],
-            'analysis': ['g4f', 'deepseek', 'anthropic'],
-            'creative': ['g4f', 'openai', 'anthropic']
+            'coding': ['g4f-gpt-4o', 'deepseek-coder', 'huggingface-codellama', 'gemini-2.5-flash'],
+            'writing': ['g4f-gpt-4o', 'claude-3-sonnet', 'g4f-gpt-4-turbo'],
+            'analysis': ['g4f-gpt-4o', 'deepseek-chat', 'claude-3-opus'],
+            'creative': ['g4f-gpt-4o', 'claude-3-opus', 'g4f-gpt-4-turbo'],
+            'conversation': ['g4f-gpt-3.5-turbo', 'claude-3-haiku', 'mistral-7b']
         };
         
-        return recommendations[useCase] || ['g4f'];
+        return recommendations[useCase] || ['g4f-gpt-3.5-turbo'];
+    }
+
+    // Get all models by category for UI display
+    getModelsForUI() {
+        const categories = this.getModelsByCategory();
+        const result = [];
+        
+        Object.entries(categories).forEach(([category, models]) => {
+            result.push({ category, models });
+        });
+        
+        return result;
     }
 }
 

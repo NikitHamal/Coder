@@ -297,6 +297,21 @@ body {
     height: 100%;
     overflow: auto;
     padding: var(--spacing-lg);
+    display: flex;
+}
+
+.editor .line-numbers {
+    padding: var(--spacing-lg) var(--spacing-sm);
+    font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: var(--font-size-base);
+    line-height: 1.6;
+    color: var(--text-muted);
+    text-align: right;
+    min-width: 50px;
+    user-select: none;
+    background-color: var(--bg-tertiary);
+    border-right: 1px solid var(--border-primary);
+    flex-shrink: 0;
 }
 
 .editor pre {
@@ -305,12 +320,17 @@ body {
     font-size: var(--font-size-base);
     line-height: 1.6;
     color: var(--text-primary);
+    flex: 1;
+    overflow: auto;
 }
 
 .editor code {
     font-family: inherit;
     font-size: inherit;
     line-height: inherit;
+    outline: none;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 /* ===== STATUS BAR ===== */

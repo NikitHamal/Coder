@@ -3,6 +3,7 @@
 // Wait for DOM to be ready before accessing elements
 let modalBackdrop, modalDialog, modalTitle, modalMessage, modalInput, modalConfirmBtn, modalCancelBtn, modalCloseBtn;
 let currentModalResolver = null;
+let modalInitialized = false;
 
 // Initialize modal elements when DOM is ready
 function initializeModalElements() {
@@ -19,6 +20,7 @@ function initializeModalElements() {
     if (!modalBackdrop || !modalDialog || !modalTitle || !modalMessage || 
         !modalInput || !modalConfirmBtn || !modalCancelBtn || !modalCloseBtn) {
         console.warn('Some modal elements not found. Modal functionality may not work properly.');
+        modalInitialized = false;
         return false;
     }
 
@@ -49,16 +51,26 @@ function initializeModalElements() {
          }
     });
 
+    modalInitialized = true;
+    console.log('Modal system initialized successfully');
     return true;
 }
 
 // Generic function to show the modal
 function showModal(config) {
     // Ensure elements are initialized
-    if (!modalBackdrop || !modalTitle || !modalMessage || !modalInput || 
+    if (!modalInitialized || !modalBackdrop || !modalTitle || !modalMessage || !modalInput || 
         !modalConfirmBtn || !modalCancelBtn) {
         console.error('Modal elements not initialized. Cannot show modal.');
-        return Promise.reject(new Error('Modal elements not initialized'));
+        // Try to initialize one more time
+        if (!modalInitialized) {
+            initializeModalElements();
+            if (!modalInitialized) {
+                return Promise.reject(new Error('Modal elements not initialized'));
+            }
+        } else {
+            return Promise.reject(new Error('Modal elements not found'));
+        }
     }
 
     return new Promise((resolve) => {
