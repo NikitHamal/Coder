@@ -62,22 +62,33 @@ class AIModels {
 
     async initializeG4F() {
         try {
-            // Try to load g4f from CDN if not available
+            // Wait for g4f to be available from CDN
             if (typeof window.g4f === 'undefined') {
-                await this.loadG4F();
+                await this.waitForG4F();
             }
+            console.log('G4F initialized successfully');
         } catch (error) {
             console.warn('Failed to initialize g4f:', error);
         }
     }
 
-    async loadG4F() {
+    async waitForG4F() {
         return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/g4f@latest/dist/g4f.min.js';
-            script.onload = () => resolve();
-            script.onerror = () => reject(new Error('Failed to load g4f'));
-            document.head.appendChild(script);
+            let attempts = 0;
+            const maxAttempts = 50; // Wait up to 5 seconds
+            
+            const checkG4F = () => {
+                attempts++;
+                if (typeof window.g4f !== 'undefined') {
+                    resolve();
+                } else if (attempts >= maxAttempts) {
+                    reject(new Error('G4F failed to load from CDN'));
+                } else {
+                    setTimeout(checkG4F, 100);
+                }
+            };
+            
+            checkG4F();
         });
     }
 
@@ -127,7 +138,7 @@ class AIModels {
 
     async generateWithG4F(prompt, options = {}) {
         if (typeof window.g4f === 'undefined') {
-            await this.loadG4F();
+            await this.waitForG4F();
         }
 
         const {
@@ -149,25 +160,27 @@ class AIModels {
     }
 
     async nonStreamWithG4F(prompt, model, temperature, maxTokens) {
-        return new Promise((resolve, reject) => {
-            window.g4f.ChatCompletion.create({
+        try {
+            const response = await window.g4f.ChatCompletion.create({
                 model: model,
                 messages: [{ role: 'user', content: prompt }],
                 temperature: temperature,
                 max_tokens: maxTokens
-            }).then(response => {
-                resolve({
-                    content: response,
-                    model: model,
-                    usage: { total_tokens: response.length }
-                });
-            }).catch(reject);
-        });
+            });
+
+            return {
+                content: response,
+                model: model,
+                usage: { total_tokens: response.length }
+            };
+        } catch (error) {
+            throw new Error(`G4F API error: ${error.message}`);
+        }
     }
 
     async streamWithG4F(prompt, model, temperature, maxTokens) {
-        return new Promise((resolve, reject) => {
-            const response = window.g4f.ChatCompletion.create({
+        try {
+            const response = await window.g4f.ChatCompletion.create({
                 model: model,
                 messages: [{ role: 'user', content: prompt }],
                 temperature: temperature,
@@ -205,8 +218,10 @@ class AIModels {
                 }
             };
 
-            resolve(stream);
-        });
+            return stream;
+        } catch (error) {
+            throw new Error(`G4F streaming error: ${error.message}`);
+        }
     }
 
     async generateWithGemini(prompt, modelKey, options = {}) {

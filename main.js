@@ -189,10 +189,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log("Coder AI App Initializing...");
 
     try {
-        // Initialize AI models
-        await aiModels.initializeG4F();
-        console.log("AI Models initialized successfully");
-
+        // Initialize AI models (will wait for CDN to load)
+        console.log("Initializing AI Models...");
+        
         // Set dependencies between modules (circular dependencies workaround)
         setEditorModuleDependencies({ saveCurrentFile });
         setUIModuleDependencies({
