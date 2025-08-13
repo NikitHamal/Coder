@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             addNewFile,
             renameFileHandler,
             deleteFileHandler,
-            updateEditor,
+            updateEditor: (filePath) => import('./editor.js').then(editor => editor.updateEditor(filePath)),
             updateCursorPosition: (el) => import('./editor.js').then(editor => editor.updateCursorPosition(el)),
             updateTheme: (theme) => import('./editor.js').then(editor => editor.updateTheme(theme)),
             getThemeBackground: (theme) => import('./editor.js').then(editor => editor.getThemeBackground(theme))

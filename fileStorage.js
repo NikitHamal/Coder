@@ -57,8 +57,60 @@ export function initializeFiles() {
 
     // If no files in storage, create default ones
     if (Object.keys(files).length === 0) {
-        console.log("No files found in localStorage. Starting with an empty workspace.");
-        return {};
+        console.log("No files found in localStorage. Creating default files.");
+        
+        const defaultFiles = {
+            'index.html': `<!DOCTYPE html>
+<html>
+<head>
+    <title>Hello World</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Hello World!</h1>
+    <p>Welcome to Coder AI</p>
+    <script src="script.js"></script>
+</body>
+</html>`,
+            'styles.css': `/* Welcome to Coder AI */
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #0d1117;
+    color: #c9d1d9;
+}
+
+h1 {
+    color: #58a6ff;
+    text-align: center;
+}
+
+p {
+    text-align: center;
+    font-size: 18px;
+}`,
+            'script.js': `// Welcome to Coder AI
+console.log('Hello from Coder AI!');
+
+// This is your JavaScript file
+// You can start coding here
+
+function greet() {
+    alert('Welcome to Coder AI!');
+}
+
+// Uncomment the line below to see a greeting
+// greet();`
+        };
+        
+        // Save default files to storage
+        Object.entries(defaultFiles).forEach(([path, content]) => {
+            fileStorage.saveFile(path, content);
+        });
+        
+        console.log("Default files created successfully");
+        return defaultFiles;
     }
 
     return files;

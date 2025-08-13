@@ -11,14 +11,30 @@ export function setEditorModuleDependencies(dependencies) {
 }
 
 // --- DOM Elements ---
-const editorPanes = document.querySelectorAll('.editor-pane');
-const previewButton = document.querySelector('.preview-button');
+let editorPanes, previewButton, activePane;
+let editorInitialized = false;
 
-// --- Editor State ---
-// Track the active pane globally within this module
-let activePane = document.querySelector('.editor-pane.active') || editorPanes[0];
-if (!activePane.classList.contains('active')) {
-    activePane.classList.add('active'); // Ensure first pane is active if none are
+// Initialize editor elements when DOM is ready
+function initializeEditorElements() {
+    editorPanes = document.querySelectorAll('.editor-pane');
+    previewButton = document.querySelector('.preview-button');
+    
+    // Track the active pane globally within this module
+    activePane = document.querySelector('.editor-pane.active') || editorPanes[0];
+    if (activePane && !activePane.classList.contains('active')) {
+        activePane.classList.add('active'); // Ensure first pane is active if none are
+    }
+    
+    editorInitialized = true;
+    console.log('Editor elements initialized successfully');
+}
+
+// Wait for DOM to be ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeEditorElements);
+} else {
+    // DOM is already ready
+    initializeEditorElements();
 }
 
 // --- Core Editor Update ---
@@ -29,12 +45,19 @@ export function updateEditorPane(pane, filePath) {
         console.error("updateEditorPane called with null or undefined pane.");
         return;
     }
+    
+    // Ensure elements are initialized
+    if (!editorInitialized) {
+        initializeEditorElements();
+    }
+    
     pane.dataset.filePath = filePath; // Store the path on the pane element
     const editorCodeElement = pane.querySelector('.editor pre code');
     const lineNumbersElement = pane.querySelector('.line-numbers');
 
     if (!editorCodeElement || !lineNumbersElement) {
         console.error("Editor code or line number element not found in pane:", pane);
+        console.log("Pane HTML:", pane.innerHTML);
         return;
     }
 
@@ -120,14 +143,23 @@ function updateLineNumbersForPane(pane, lineNumbersElement, codeElement) {
 
 // Update the currently active editor pane
 export function updateEditor(filePath) {
-     if (!activePane) {
+    // Ensure elements are initialized
+    if (!editorInitialized) {
+        initializeEditorElements();
+    }
+    
+    if (!activePane) {
         console.error("No active editor pane found.");
-        activePane = editorPanes[0]; // Fallback to first pane
-        if (!activePane) return; // No panes at all?
-     }
+        if (editorPanes && editorPanes.length > 0) {
+            activePane = editorPanes[0]; // Fallback to first pane
+        } else {
+            console.error("No editor panes found at all.");
+            return;
+        }
+    }
 
-     // Handle case where no file is selected (e.g., last tab closed)
-     if (!filePath) {
+    // Handle case where no file is selected (e.g., last tab closed)
+    if (!filePath) {
         console.log("No file selected. Clearing editor."); // Log info instead of warning
         // Clear the active editor pane if no file path
         updateEditorPane(activePane, null);
