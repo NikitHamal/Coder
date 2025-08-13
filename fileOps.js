@@ -12,7 +12,11 @@ function autoFixSemicolons(code) {
     return code.split('\n').map(line => {
         const trimmed = line.trim();
         if (!trimmed || trimmed.startsWith('//')) return line;
-        if (/^[^\{\}\s][^;\{\}]$/.test(trimmed) && !trimmed.endsWith(';')) return line + ';';
+        const startsWithKeyword = /^(if|for|while|switch|try|catch|finally|do|class|function)\b/.test(trimmed);
+        const endsOk = /[;{}:,]$/.test(trimmed) || /=>\s*\{?$/.test(trimmed);
+        if (!startsWithKeyword && !endsOk) {
+            return line + ';';
+        }
         return line;
     }).join('\n');
 }
@@ -148,6 +152,18 @@ export function copyFile(srcPath, destPath) {
     if (content === null) return { success: false, error: 'Source file not found.' };
     if (fileStorage.getFile(destPath) !== null) return { success: false, error: 'Destination already exists.' };
     fileStorage.saveFile(destPath, content);
+    addFileOperationMessage(`File copied: ${srcPath} → ${destPath}`);
+    if (destPath.endsWith('.js')) {
+        const problems = lintJsCode(content);
+        updateLintStatus(problems);
+        showLinterPanel(problems, async () => {
+            const fixed = autoFixSemicolons(content);
+            fileStorage.saveFile(destPath, fixed);
+            const newProblems = lintJsCode(fixed);
+            updateLintStatus(newProblems);
+            showLinterPanel(newProblems, null);
+        });
+    }
     return { success: true };
 }
 

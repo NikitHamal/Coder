@@ -76,8 +76,14 @@ export async function handleAgenticActions(actions) {
                 case 'delete_file':
                     if (!action.path) throw new Error('Missing path for delete operation');
                     result = await fileOps.deleteFile(action.path);
-                    // Also try to delete folder marker if it exists
-                    await fileOps.deleteFolder(action.path);
+                    // If not a file, attempt deleting a folder sentinel only if it exists
+                    if (!result.success) {
+                        const folderPath = action.path.endsWith('/') ? action.path : action.path + '/';
+                        const hasFolderMarker = fileStorage.getFile(folderPath + '.folder') !== null;
+                        if (hasFolderMarker) {
+                            result = await fileOps.deleteFolder(action.path);
+                        }
+                    }
                     if (result.success) { actionsExecuted++; }
                     break;
                 case 'rename_file':

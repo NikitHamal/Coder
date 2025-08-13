@@ -17,7 +17,7 @@ export const fileStorage = {
     // Get a specific file content
     getFile: function(filePath) {
         const files = this.getFiles();
-        return files[filePath] || null;
+        return Object.prototype.hasOwnProperty.call(files, filePath) ? files[filePath] : null;
     },
 
     // Save a specific file content

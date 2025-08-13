@@ -8,8 +8,10 @@ export function lintJsCode(code) {
         const trimmed = line.trim();
         // Skip empty lines and comments
         if (!trimmed || trimmed.startsWith('//')) return;
-        // Check for missing semicolon (simple heuristic)
-        if (/^[^\{\}\s][^;\{\}]$/.test(trimmed) && !trimmed.endsWith(';')) {
+        // Check for missing semicolon (improved heuristic)
+        const startsWithKeyword = /^(if|for|while|switch|try|catch|finally|do|class|function)\b/.test(trimmed);
+        const endsOk = /[;{}:,]$/.test(trimmed) || /=>\s*\{?$/.test(trimmed);
+        if (!startsWithKeyword && !endsOk) {
             problems.push({
                 line: idx + 1,
                 message: 'Missing semicolon',
@@ -22,6 +24,7 @@ export function lintJsCode(code) {
             if (c === '}') openBrackets.pop();
         }
     });
+
     if (openBrackets.length > 0) {
         problems.push({
             line: openBrackets[openBrackets.length - 1],
