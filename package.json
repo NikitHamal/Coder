@@ -1,18 +1,30 @@
 {
   "name": "coder-ai",
-  "version": "1.0.0",
-  "description": "A clean, minimal, and elegant coding environment.",
+  "version": "2.0.0",
+  "description": "A modern, AI-powered coding environment with free AI models",
   "main": "main.js",
+  "type": "module",
   "scripts": {
+    "dev": "python3 -m http.server 8000",
+    "build": "echo 'No build step required for this project'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "ai",
     "editor",
-    "gemini"
+    "code",
+    "gpt4free",
+    "g4f",
+    "coding",
+    "development"
   ],
   "author": "",
-  "license": "ISC",
-  "dependencies": {},
-  "devDependencies": {}
+  "license": "MIT",
+  "dependencies": {
+    "g4f": "^1.4.6"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }

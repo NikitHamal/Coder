@@ -2,7 +2,7 @@ import { fileStorage } from './fileStorage.js';
 import { showPrompt, showConfirm, showAlert } from './modal.js';
 import { gatherContext } from './codebaseContext.js';
 import { handleAgenticActions, setAgentActionDependencies } from './agentActions.js';
-import { gemini } from './gemini.js';
+import { aiModels } from './aiModels.js';
 
 let initializeUI, selectFile;
 
@@ -14,6 +14,7 @@ export function setAIChatDependencies(dependencies) {
 
 let conversationHistory = [];
 let currentAssistantMessageDiv = null;
+let isGenerating = false;
 
 function addMessageToUI(role, content) {
     const messagesContainer = document.querySelector('.ai-messages-container');
@@ -98,200 +99,128 @@ function updateAssistantMessageUI(messageDiv, { planning, webResults, finalConte
     if (finalContent) {
         try {
             mainContent.innerHTML = marked.parse(finalContent);
-        } catch (e) {
-            console.error("Error parsing Markdown:", e);
+        } catch (error) {
+            console.error('Error parsing markdown:', error);
             mainContent.textContent = finalContent;
         }
-    } else {
-        mainContent.innerHTML = '';
     }
 }
 
 async function sendChatMessage() {
-    const inputElement = document.querySelector('.ai-input');
-    const modeSelectElement = document.getElementById('ai-mode-select');
-    const modelSelectElement = document.getElementById('ai-model-select');
-    const activePane = document.querySelector('.editor-pane.active') || document.querySelector('.editor-pane:first-child');
+    if (isGenerating) return;
 
-    if (!inputElement || !modeSelectElement || !modelSelectElement) {
-        console.error("AI input, mode selector, or model selector not found.");
+    const inputElement = document.querySelector('.ai-input');
+    const sendButton = document.querySelector('.send-button');
+    const modelSelect = document.querySelector('#ai-model-select');
+    
+    if (!inputElement || !sendButton) {
+        console.error("AI chat elements not found");
         return;
     }
-    let message = inputElement.value.trim();
-    const selectedMode = modeSelectElement.value;
-    const selectedModelId = modelSelectElement.value;
-    // Persist preferences
-    try {
-        localStorage.setItem('coder_ai_mode', selectedMode);
-        localStorage.setItem('coder_ai_model', selectedModelId);
-    } catch (e) { /* no-op */ }
 
+    const message = inputElement.value.trim();
     if (!message) return;
 
-    const displayMessage = message.replace(/@web|@think/g, '').trim();
-    const messageToSend = displayMessage;
+    const selectedModel = modelSelect ? modelSelect.value : 'g4f';
+    const selectedMode = document.querySelector('#ai-mode-select')?.value || 'ask';
 
-    if (!messageToSend) return;
-
-    addMessageToUI('user', displayMessage);
-    conversationHistory.push({ role: 'user', content: messageToSend });
+    // Clear input and disable send button
     inputElement.value = '';
+    sendButton.disabled = true;
+    isGenerating = true;
+
+    // Add user message to UI
+    addMessageToUI('user', message);
+    
+    // Add assistant message placeholder
     currentAssistantMessageDiv = addMessageToUI('assistant', 'Thinking...');
-
-    let workspaceContext = null;
-    if (selectedMode === 'write') {
-        const activeFilePath = activePane?.dataset.filePath || null;
-        let activeFileContent = null;
-        if (activeFilePath && activePane) {
-            const codeElement = activePane.querySelector('.editor pre code');
-            if (codeElement) {
-                activeFileContent = codeElement.textContent;
-            } else {
-                console.warn(`Could not find code element in active pane for path: ${activeFilePath}`);
-            }
-        }
-        workspaceContext = gatherContext(activeFilePath, activeFileContent);
-    }
-
+    
     try {
-        await getGeminiResponse(messageToSend, currentAssistantMessageDiv, selectedMode, selectedModelId, workspaceContext);
-    } catch (error) {
-        console.error('Error communicating with Gemini API:', error);
-        if (currentAssistantMessageDiv) {
-            updateAssistantMessageUI(currentAssistantMessageDiv, { finalContent: `Error: ${error.message}` });
-            currentAssistantMessageDiv.classList.add('error-message');
+        // Gather codebase context if needed
+        let context = '';
+        if (selectedMode === 'write' || message.toLowerCase().includes('code') || message.toLowerCase().includes('file')) {
+            context = await gatherContext();
         }
-        currentAssistantMessageDiv = null;
-    }
-}
 
-async function getGeminiResponse(message, assistantMessageDiv, mode, modelId, workspaceContext) {
-    const messagesContainer = document.querySelector('.ai-messages-container');
-    if (assistantMessageDiv) {
-        const mainContent = assistantMessageDiv.querySelector('.main-message-content');
-        if (mainContent) mainContent.textContent = '';
-    }
-
-    // Prefer function calling workflow in write mode
-    if (mode === 'write') {
-        try {
-            await handleWriteModeWithFunctionCalling({ message, assistantMessageDiv, modelId, workspaceContext, messagesContainer });
-            return;
-        } catch (e) {
-            console.warn('Function calling failed, falling back to JSON instructions. Error:', e);
+        // Prepare full prompt with context
+        let fullPrompt = message;
+        if (context) {
+            fullPrompt = `Context: ${context}\n\nUser Request: ${message}`;
         }
-    }
 
-    let fullPrompt = message;
-    if (mode === 'write' && workspaceContext) {
-        const writeInstructions = `You are in 'write' mode. Analyze the request and the provided context (formatted with Markdown headers: ## File List, ## Active File Path, ## Active File Symbols, ## Active File Content).\nContext:\n---\n${workspaceContext}\n---\nRespond ONLY with a JSON object containing an 'actions' array (objects with 'type', 'path', 'content') and an 'explanation' string. Example: { "actions": [{ "type": "create_file", "path": "new.js", "content": "console.log('hello');" }], "explanation": "Created new.js." }`;
-        fullPrompt = `${writeInstructions}\n\nUser request: ${message}`;
-    }
+        // Generate response using selected AI model
+        const response = await aiModels.generateContent(fullPrompt, selectedModel, {
+            streaming: true,
+            maxTokens: 4096
+        });
 
-    const response = await gemini.generateContent(fullPrompt, modelId, true);
-
-    if (!response.body) {
-        throw new Error('Streaming response body is null.');
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let fullResponseContent = '';
-
-    try {
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-
-            // Try parse the whole buffer as a single JSON array
-            try {
-                const jsonArray = JSON.parse(buffer);
-                fullResponseContent = jsonArray.map(item => item.candidates[0].content.parts[0].text).join('');
-                updateAssistantMessageUI(assistantMessageDiv, { finalContent: fullResponseContent });
-                if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                continue; // Move to the next chunk
-            } catch (e) {
-                // Fallback to parse as event stream lines
-            }
-
-            const lines = buffer.split('\n');
-            for (const line of lines) {
-                if (line.startsWith('data:')) {
-                    const dataStr = line.substring(5).trim();
-                    try {
-                        const jsonData = JSON.parse(dataStr);
-                        if (jsonData.candidates && jsonData.candidates.length > 0) {
-                            const content = jsonData.candidates[0].content.parts[0].text;
-                            fullResponseContent += content;
-                            updateAssistantMessageUI(assistantMessageDiv, { finalContent: fullResponseContent });
-                            if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                        }
-                    } catch (e) {
-                        // Ignore parsing errors for incomplete JSON
+        if (response && response.on) {
+            // Handle streaming response
+            let fullResponse = '';
+            
+            response.on('data', (chunk) => {
+                fullResponse += chunk;
+                if (currentAssistantMessageDiv) {
+                    const mainContent = currentAssistantMessageDiv.querySelector('.main-message-content');
+                    if (mainContent) {
+                        mainContent.innerHTML = marked.parse(fullResponse);
                     }
                 }
+            });
+
+            response.on('end', (finalResponse) => {
+                if (currentAssistantMessageDiv) {
+                    const mainContent = currentAssistantMessageDiv.querySelector('.main-message-content');
+                    if (mainContent) {
+                        mainContent.innerHTML = marked.parse(finalResponse);
+                    }
+                }
+                
+                // Add to conversation history
+                conversationHistory.push(
+                    { role: 'user', content: message },
+                    { role: 'assistant', content: finalResponse }
+                );
+                
+                // Re-enable send button
+                sendButton.disabled = false;
+                isGenerating = false;
+            });
+        } else {
+            // Handle non-streaming response
+            const content = response.content || response;
+            if (currentAssistantMessageDiv) {
+                const mainContent = currentAssistantMessageDiv.querySelector('.main-message-content');
+                if (mainContent) {
+                    mainContent.innerHTML = marked.parse(content);
+                }
+            }
+            
+            // Add to conversation history
+            conversationHistory.push(
+                { role: 'user', content: message },
+                { role: 'assistant', content: content }
+            );
+            
+            // Re-enable send button
+            sendButton.disabled = false;
+            isGenerating = false;
+        }
+
+    } catch (error) {
+        console.error('Error generating AI response:', error);
+        
+        if (currentAssistantMessageDiv) {
+            const mainContent = currentAssistantMessageDiv.querySelector('.main-message-content');
+            if (mainContent) {
+                mainContent.innerHTML = `<div class="error-message">❌ Error: ${error.message}</div>`;
             }
         }
-    } finally {
-        if (!reader.closed) {
-            reader.cancel().catch(e => console.warn("Error cancelling reader:", e));
-        }
+        
+        // Re-enable send button
+        sendButton.disabled = false;
+        isGenerating = false;
     }
-
-    // The final buffer might contain the last part of the response.
-    // Let's try to parse it.
-    try {
-        const jsonArray = JSON.parse(buffer);
-        fullResponseContent = jsonArray.map(item => item.candidates[0].content.parts[0].text).join('');
-        updateAssistantMessageUI(assistantMessageDiv, { finalContent: fullResponseContent });
-        if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    } catch(e) {
-        // Ignore if the final buffer is not a valid JSON.
-    }
-
-
-    const finalTrimmedContent = fullResponseContent.trim();
-    let agenticActions = null;
-    let explanation = finalTrimmedContent;
-
-    const jsonFenceStart = '```json\n';
-    const jsonFenceEnd = '\n```';
-
-    if (mode === 'write' && finalTrimmedContent.startsWith(jsonFenceStart) && finalTrimmedContent.endsWith(jsonFenceEnd)) {
-        const potentialJson = finalTrimmedContent.substring(jsonFenceStart.length, finalTrimmedContent.length - jsonFenceEnd.length);
-        try {
-            const parsedResponse = JSON.parse(potentialJson);
-            if (parsedResponse && Array.isArray(parsedResponse.actions) && typeof parsedResponse.explanation === 'string') {
-                agenticActions = parsedResponse.actions;
-                explanation = parsedResponse.explanation;
-            } else {
-                explanation = "⚠️ Error: The response format does not match expected structure. Please try again.";
-            }
-        } catch (e) {
-            explanation = "⚠️ Error: Could not parse the AI response as valid JSON. Please try again.\nRaw content was:\n" + finalTrimmedContent;
-        }
-    }
-
-    updateAssistantMessageUI(assistantMessageDiv, {
-        finalContent: explanation
-    });
-
-    if (agenticActions) {
-        try {
-            await handleAgenticActions(agenticActions);
-        } catch (error) {
-            console.error("Error executing agentic actions:", error);
-            addMessageToUI('assistant', `Error executing actions: ${error.message}`);
-        }
-    }
-
-    if (explanation) {
-        conversationHistory.push({ role: 'assistant', content: explanation });
-    }
-    currentAssistantMessageDiv = null;
 }
 
 // --- Function calling powered Write mode ---
@@ -366,7 +295,7 @@ async function handleWriteModeWithFunctionCalling({ message, assistantMessageDiv
         { role: 'user', parts: [{ text: systemPreamble + '\n\n' + userContent }] }
     ];
 
-    const res = await gemini.generateWithTools({ contents, tools: functionDeclarations, model: modelId, streaming: false });
+    const res = await aiModels.generateWithTools({ contents, tools: functionDeclarations, model: modelId, streaming: false });
 
     let explanationText = '';
     const actions = [];

@@ -4,18 +4,10 @@ class GeminiAPI {
     constructor() {
         this.apiKey = this.getApiKey();
         this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/';
-        // Per-model default limits (best-effort defaults; can be overridden via localStorage)
-        // Units: perSecond, perMinute, perDay
+        // Only Gemini 2.5 models
         this.rateLimits = {
-            'gemini-1.5-flash':            { perSecond: 2,  perMinute: 60,  perDay: 5000 },
-            'gemini-1.5-pro':              { perSecond: 1,  perMinute: 15,  perDay: 1500 },
-            'gemini-2.0-flash':            { perSecond: 2,  perMinute: 60,  perDay: 5000 },
-            'gemini-2.0-flash-lite':       { perSecond: 3,  perMinute: 90,  perDay: 8000 },
-            'gemini-2.0-flash-thinking':   { perSecond: 1,  perMinute: 15,  perDay: 1500 },
-            'gemini-2.0-flash-vision':     { perSecond: 1,  perMinute: 30,  perDay: 3000 },
             'gemini-2.5-flash':            { perSecond: 1,  perMinute: 15,  perDay: 1500 },
-            'gemini-pro':                  { perSecond: 1,  perMinute: 60,  perDay: 5000 },
-            'gemini-pro-vision':           { perSecond: 1,  perMinute: 60,  perDay: 5000 },
+            'gemini-2.5-pro':              { perSecond: 1,  perMinute: 15,  perDay: 1500 },
         };
     }
 
@@ -28,7 +20,7 @@ class GeminiAPI {
     }
 
     async checkRateLimit(model) {
-        const defaults = this.rateLimits[model] || { perSecond: 2, perMinute: 60, perDay: 5000 };
+        const defaults = this.rateLimits[model] || { perSecond: 1, perMinute: 15, perDay: 1500 };
         // Allow overrides via localStorage (optional)
         const override = JSON.parse(localStorage.getItem(`gemini-rate-config-${model}`) || 'null');
         const limit = override || defaults;

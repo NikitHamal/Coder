@@ -11,7 +11,7 @@ import {
     updateStatusBar,
     setupUIEventListeners,
     applyInitialFontSize,
-    loadSettingsToPanel, // Renamed from loadSettings in ui.js
+    loadSettingsToPanel,
     setUIModuleDependencies
 } from './ui.js';
 import {
@@ -20,11 +20,11 @@ import {
     applyInitialTheme,
     setEditorModuleDependencies
 } from './editor.js';
-// Import AI chat functionality from the new module
 import {
     setupAIChatEventListeners,
     setAIChatDependencies
 } from './aiChatModule.js';
+import { aiModels } from './aiModels.js';
 
 // --- Core Application Logic ---
 
@@ -71,7 +71,6 @@ export function closeTab(filePath) {
         }
     }
 }
-
 
 // Function to handle adding a new file
 export async function addNewFile(filePath) {
@@ -122,20 +121,16 @@ export async function deleteFileHandler(filePath) {
     }
 }
 
-
 // Function to save the content of the currently active file
-// Needs to be exported so editor.js can call it on input
 export function saveCurrentFile() {
     const activeTab = document.querySelector('.tab.active');
-    const activePane = document.querySelector('.editor-pane.active') || document.querySelector('.editor-pane:first-child'); // Ensure we get the active pane
+    const activePane = document.querySelector('.editor-pane.active') || document.querySelector('.editor-pane:first-child');
 
     if (!activeTab || !activePane) {
-        // console.warn("Save attempt failed: No active tab or pane found.");
         return; // No active file to save
     }
 
     const filePath = activeTab.getAttribute('data-path');
-    // Get content directly from the contenteditable element
     const codeElement = activePane.querySelector('.editor pre code');
     if (!codeElement) {
          console.error("Save attempt failed: Could not find code element in active pane.");
@@ -145,49 +140,155 @@ export function saveCurrentFile() {
 
     if (filePath) {
         fileStorage.saveFile(filePath, content);
-        // Optionally update status bar size indicator immediately
         updateStatusBar(filePath);
     } else {
         console.warn("Save attempt failed: Active tab has no file path.");
     }
 }
 
+// Function to test AI model connections
+export async function testAIModelConnection(modelKey = null) {
+    try {
+        const result = await aiModels.testConnection(modelKey);
+        if (result.success) {
+            showAlert('Success', `${result.model} connection successful!`);
+        } else {
+            showAlert('Error', `${result.model} connection failed: ${result.error}`);
+        }
+    } catch (error) {
+        showAlert('Error', `Failed to test connection: ${error.message}`);
+    }
+}
+
+// Function to get AI model recommendations
+export function getAIRecommendations(useCase) {
+    return aiModels.getRecommendedModels(useCase);
+}
+
+// Function to update AI model selection
+export function updateAIModel(modelKey) {
+    if (aiModels.setCurrentModel(modelKey)) {
+        // Update UI to reflect the change
+        const modelSelect = document.querySelector('#ai-model-select');
+        if (modelSelect) {
+            modelSelect.value = modelKey;
+        }
+        
+        // Show success message
+        const modelInfo = aiModels.getModelInfo(modelKey);
+        if (modelInfo) {
+            showAlert('Success', `Switched to ${modelInfo.name}`);
+        }
+    } else {
+        showAlert('Error', 'Invalid model selected');
+    }
+}
 
 // --- Initialization ---
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("Coder App Initializing...");
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("Coder AI App Initializing...");
 
-    // Set dependencies between modules (circular dependencies workaround)
-    setEditorModuleDependencies({ saveCurrentFile });
-    setUIModuleDependencies({
-        selectFile,
-        closeTab,
-        addNewFile,
-        renameFileHandler,
-        deleteFileHandler,
-        // Pass editor functions needed by UI
-        updateEditor,
-        updateCursorPosition: (el) => import('./editor.js').then(editor => editor.updateCursorPosition(el)), // Lazy load for cursor pos
-        updateTheme: (theme) => import('./editor.js').then(editor => editor.updateTheme(theme)),
-        getThemeBackground: (theme) => import('./editor.js').then(editor => editor.getThemeBackground(theme))
-     });
-    // Set dependencies needed by aiChat.js
-    // Pass initializeUI (imported from ui.js) and selectFile (defined here)
-    setAIChatDependencies({
-        initializeUI: initializeUI,
-        selectFile: selectFile
+    try {
+        // Initialize AI models
+        await aiModels.initializeG4F();
+        console.log("AI Models initialized successfully");
+
+        // Set dependencies between modules (circular dependencies workaround)
+        setEditorModuleDependencies({ saveCurrentFile });
+        setUIModuleDependencies({
+            selectFile,
+            closeTab,
+            addNewFile,
+            renameFileHandler,
+            deleteFileHandler,
+            updateEditor,
+            updateCursorPosition: (el) => import('./editor.js').then(editor => editor.updateCursorPosition(el)),
+            updateTheme: (theme) => import('./editor.js').then(editor => editor.updateTheme(theme)),
+            getThemeBackground: (theme) => import('./editor.js').then(editor => editor.getThemeBackground(theme))
+         });
+
+        // Set dependencies needed by aiChat.js
+        setAIChatDependencies({
+            initializeUI: initializeUI,
+            selectFile: selectFile
+        });
+
+        // Initialize core components
+        initializeFiles(); // Ensure default files exist if needed
+        initializeUI(); // Setup file tree, tabs, load first file
+        applyInitialTheme(); // Apply saved theme colors/styles
+        applyInitialFontSize(); // Apply saved font size
+        loadSettingsToPanel(); // Load settings into the panel controls initially
+
+        // Setup event listeners
+        setupUIEventListeners(); // Setup general UI clicks (add file, settings)
+        setupEditorEventListeners(); // Setup editor clicks/keys/input
+        setupAIChatEventListeners(); // Setup AI chat listeners
+
+        // Setup keyboard shortcuts for AI
+        setupAIKeyboardShortcuts();
+
+        console.log("Coder AI App Initialized Successfully.");
+        
+        // Show welcome message
+        showWelcomeMessage();
+        
+    } catch (error) {
+        console.error("Failed to initialize Coder AI:", error);
+        showAlert('Initialization Error', 'Failed to initialize the application. Please refresh the page.');
+    }
+});
+
+// Setup AI-specific keyboard shortcuts
+function setupAIKeyboardShortcuts() {
+    document.addEventListener('keydown', (event) => {
+        // Ctrl+I to focus AI input
+        if (event.ctrlKey && event.key === 'i') {
+            event.preventDefault();
+            const aiInput = document.querySelector('.ai-input');
+            if (aiInput) {
+                aiInput.focus();
+            }
+        }
+        
+        // Ctrl+Enter to send AI message (when AI input is focused)
+        if (event.ctrlKey && event.key === 'Enter') {
+            const aiInput = document.querySelector('.ai-input');
+            if (aiInput === document.activeElement) {
+                event.preventDefault();
+                const sendButton = document.querySelector('.send-button');
+                if (sendButton && !sendButton.disabled) {
+                    sendButton.click();
+                }
+            }
+        }
     });
+}
 
-
-    initializeFiles(); // Ensure default files exist if needed
-    initializeUI(); // Setup file tree, tabs, load first file
-    applyInitialTheme(); // Apply saved theme colors/styles
-    applyInitialFontSize(); // Apply saved font size
-    loadSettingsToPanel(); // Load settings into the panel controls initially
-
-    setupUIEventListeners(); // Setup general UI clicks (add file, settings)
-    setupEditorEventListeners(); // Setup editor clicks/keys/input
-    setupAIChatEventListeners(); // Setup AI chat listeners from the new module
-
-    console.log("Coder App Initialized.");
-}); 
+// Show welcome message and tips
+function showWelcomeMessage() {
+    // Add a small delay to ensure UI is fully loaded
+    setTimeout(() => {
+        const messagesContainer = document.querySelector('.ai-messages-container');
+        if (messagesContainer) {
+            const welcomeTip = document.createElement('div');
+            welcomeTip.className = 'ai-message assistant-message tip-message';
+            welcomeTip.innerHTML = `
+                <div class="message-avatar">
+                    <i class="material-icons">lightbulb</i>
+                </div>
+                <div class="message-content">
+                    <p><strong>💡 Quick Tips:</strong></p>
+                    <ul>
+                        <li>Use <kbd>Ctrl+I</kbd> to quickly focus the AI input</li>
+                        <li>Try different AI modes for different tasks</li>
+                        <li>Switch between free AI models as needed</li>
+                        <li>Use <kbd>Ctrl+Enter</kbd> to send messages quickly</li>
+                    </ul>
+                </div>
+            `;
+            messagesContainer.appendChild(welcomeTip);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    }, 1000);
+} 

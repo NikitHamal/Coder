@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coder - Modern Coding Environment</title>
+    <title>Coder AI - Modern AI-Powered Coding Environment</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <!-- Theme Stylesheets -->
@@ -14,28 +14,40 @@
     <link rel="stylesheet" href="light-theme.css">
     <!-- Marked.js for Markdown Parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- G4F.js for free AI models -->
+    <script src="https://cdn.jsdelivr.net/npm/g4f@latest/dist/g4f.min.js"></script>
 </head>
 <body>
     <div class="app-container">
         <!-- Left sidebar - Files -->
         <div class="sidebar files-sidebar">
             <div class="sidebar-header logo">
-                <h1>Coder</h1>
+                <div class="logo-container">
+                    <div class="logo-icon">
+                        <i class="material-icons">code</i>
+                    </div>
+                    <h1>Coder AI</h1>
+                </div>
             </div>
             <div class="section-header">
                 <div class="section-label">
                     <h3>Files</h3>
                 </div>
-                <button class="add-file-btn"><i class="material-icons">add</i></button>
+                <button class="add-file-btn" title="Add New File">
+                    <i class="material-icons">add</i>
+                </button>
             </div>
             <div class="file-list">
                 <div class="file-item active">
+                    <i class="material-icons file-icon">description</i>
                     <span>index.html</span>
                 </div>
                 <div class="file-item">
+                    <i class="material-icons file-icon">style</i>
                     <span>styles.css</span>
                 </div>
                 <div class="file-item">
+                    <i class="material-icons file-icon">javascript</i>
                     <span>script.js</span>
                 </div>
             </div>
@@ -49,11 +61,21 @@
                     <!-- Dynamic tabs will be added here by JavaScript -->
                 </div>
                 <div class="actions-container">
-                    <button class="action-btn search-btn" title="Search (Ctrl+F)"><i class="material-icons">search</i></button>
-                    <button class="action-btn download-btn" title="Download Current File"><i class="material-icons">download</i></button>
-                    <button class="action-btn terminal-btn" title="Terminal"><i class="material-icons">terminal</i></button>
-                    <button class="action-btn split-btn" title="Split Editor"><i class="material-icons">vertical_split</i></button>
-                    <button class="action-btn settings-btn" title="Settings"><i class="material-icons">settings</i></button>
+                    <button class="action-btn search-btn" title="Search (Ctrl+F)">
+                        <i class="material-icons">search</i>
+                    </button>
+                    <button class="action-btn download-btn" title="Download Current File">
+                        <i class="material-icons">download</i>
+                    </button>
+                    <button class="action-btn terminal-btn" title="Terminal (Ctrl+`)">
+                        <i class="material-icons">terminal</i>
+                    </button>
+                    <button class="action-btn split-btn" title="Split Editor (Ctrl+\)">
+                        <i class="material-icons">vertical_split</i>
+                    </button>
+                    <button class="action-btn settings-btn" title="Settings">
+                        <i class="material-icons">settings</i>
+                    </button>
                 </div>
             </div>
 
@@ -99,135 +121,122 @@
                     </div>
                     <div class="settings-group">
                         <h4>Font Size</h4>
-                        <select id="font-size">
-                            <option value="12">12px</option>
-                            <option value="14" selected>14px</option>
-                            <option value="16">16px</option>
-                            <option value="18">18px</option>
-                        </select>
-                    </div>
-                    <div class="settings-group">
-                        <h4>Tab Size</h4>
-                        <select id="tab-size">
-                            <option value="2">2 spaces</option>
-                            <option value="4" selected>4 spaces</option>
-                        </select>
-                    </div>
-                    <div class="settings-group">
-                        <h4>Gemini API Key</h4>
-                        <div class="api-key-container">
-                            <input type="password" id="gemini-api-key" placeholder="Enter your Gemini API key">
-                            <button id="toggle-api-key-visibility" class="action-btn" title="Toggle visibility"><i class="material-icons">visibility_off</i></button>
+                        <div class="font-size-controls">
+                            <button class="font-size-btn" data-size="12">12</button>
+                            <button class="font-size-btn" data-size="14">14</button>
+                            <button class="font-size-btn active" data-size="16">16</button>
+                            <button class="font-size-btn" data-size="18">18</button>
+                            <button class="font-size-btn" data-size="20">20</button>
                         </div>
-                        <button id="save-api-key" class="save-btn">Save Key</button>
+                    </div>
+                    <div class="settings-group">
+                        <h4>AI Settings</h4>
+                        <div class="ai-settings">
+                            <label>
+                                <input type="checkbox" id="auto-save-conversation" checked>
+                                Auto-save conversation history
+                            </label>
+                            <label>
+                                <input type="checkbox" id="streaming-responses" checked>
+                                Enable streaming responses
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Preview button container -->
-            <div class="preview-container">
-                <button class="preview-button"><i class="material-icons">visibility</i> Preview</button>
-            </div>
-
-            <!-- Editor container with split view support -->
+            <!-- Editor area -->
             <div class="editor-container">
-                <!-- First editor pane -->
-                <div class="editor-pane active">
+                <div class="editor-pane active" data-file-path="index.html">
                     <div class="editor">
-                        <div class="line-numbers"></div>
-                        <pre><code contenteditable="true" spellcheck="false"><!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coder - Modern Coding Environment</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <!-- Your code here -->
-</body>
-</html></code></pre>
-                    </div>
-                </div>
-                
-                <!-- Second editor pane (hidden by default) -->
-                <div class="editor-pane" style="display: none;">
-                    <div class="editor">
-                        <div class="line-numbers"></div>
-                        <pre><code contenteditable="true" spellcheck="false"></code></pre>
+                        <pre><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Hello World&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Hello World!&lt;/h1&gt;
+    &lt;p&gt;Welcome to Coder AI&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
                     </div>
                 </div>
             </div>
-            
+
             <!-- Status bar -->
             <div class="status-bar">
                 <div class="status-left">
-                    <div class="status-item">
-                        <i class="material-icons">code</i>
-                        <span class="file-type">HTML</span>
-                    </div>
-                    <div class="status-item">
-                        <i class="material-icons">storage</i>
-                        <span class="file-size">0.3 KB</span>
-                    </div>
+                    <span class="cursor-position">Ln 1, Col 1</span>
+                    <span class="file-size">0 B</span>
                 </div>
                 <div class="status-right">
-                    <div class="status-item">
-                        <span class="cursor-position">Ln 1, Col 1</span>
-                    </div>
-                    <div class="status-item">
-                        <i class="material-icons">format_indent_increase</i>
-                        <span class="tab-size">Spaces: 4</span>
-                    </div>
-                    <div class="status-item">
-                        <i class="material-icons">auto_fix_high</i>
-                        <span class="lint-status" style="cursor:pointer">0 Problems</span>
-                    </div>
+                    <span class="encoding">UTF-8</span>
+                    <span class="language">HTML</span>
                 </div>
-            </div>
-            <!-- Linter panel (hidden by default) -->
-            <div id="linter-panel" style="display:none;">
-                <div class="linter-header">
-                    <span>Linter Problems</span>
-                    <button id="linter-fix-btn" style="display:none;">Fix All</button>
-                    <button id="linter-close-btn">&times;</button>
-                </div>
-                <ul id="linter-list"></ul>
             </div>
         </div>
 
-        <!-- Right sidebar - AI -->
+        <!-- Right sidebar - AI Assistant -->
         <div class="sidebar ai-sidebar">
             <div class="sidebar-header">
-                <h2>AI Assistant</h2>
+                <div class="ai-header">
+                    <div class="ai-icon">
+                        <i class="material-icons">smart_toy</i>
+                    </div>
+                    <h2>AI Assistant</h2>
+                </div>
+                <div class="ai-status">
+                    <span class="status-indicator online"></span>
+                    <span class="status-text">Online</span>
+                </div>
             </div>
+            
             <div class="ai-content">
                 <div class="ai-messages-container"> 
                     <!-- Chat messages will be appended here -->
-                    <div class="ai-message assistant-message">
-                        <p>How can I help you with your code today?</p>
+                    <div class="ai-message assistant-message welcome-message">
+                        <div class="message-avatar">
+                            <i class="material-icons">smart_toy</i>
+                        </div>
+                        <div class="message-content">
+                            <p>👋 Hello! I'm your AI coding assistant. I can help you with:</p>
+                            <ul>
+                                <li>Writing and debugging code</li>
+                                <li>Explaining concepts</li>
+                                <li>Code optimization</li>
+                                <li>File operations</li>
+                            </ul>
+                            <p>What would you like to work on today?</p>
+                        </div>
                     </div>
                 </div>
+                
                 <div class="ai-input-container">
-                    <input type="text" class="ai-input" placeholder="Ask anything...">
-                    <div class="ai-input-controls">
-                        <select id="ai-mode-select" class="ai-control-select">
-                            <option value="ask">Ask</option>
-                            <option value="write">Write</option>
+                    <div class="ai-controls">
+                        <select id="ai-mode-select" class="ai-control-select" title="AI Mode">
+                            <option value="ask">💬 Ask</option>
+                            <option value="write">✍️ Write</option>
+                            <option value="debug">🐛 Debug</option>
+                            <option value="explain">📚 Explain</option>
                         </select>
-                        <select id="ai-model-select" class="ai-control-select">
-                            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                            <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                            <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite</option>
-                            <option value="gemini-2.0-flash-thinking">Gemini 2.0 Flash Thinking</option>
-                            <option value="gemini-2.0-flash-vision">Gemini 2.0 Flash Vision</option>
-                            <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                            <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                            <option value="gemini-pro">Gemini Pro</option>
-                            <option value="gemini-pro-vision">Gemini Pro Vision</option>
+                        <select id="ai-model-select" class="ai-control-select" title="AI Model">
+                            <option value="g4f">🚀 GPT4Free (g4f)</option>
+                            <option value="deepseek">🔍 DeepSeek</option>
+                            <option value="openai">🤖 OpenAI (Free)</option>
+                            <option value="anthropic">🧠 Claude (Free)</option>
+                            <option value="gemini-2.5-flash">⭐ Gemini 2.5 Flash</option>
+                            <option value="gemini-2.5-pro">⭐ Gemini 2.5 Pro</option>
                         </select>
                     </div>
-                    <button class="send-button"><i class="material-icons">send</i></button>
+                    <div class="ai-input-wrapper">
+                        <input type="text" class="ai-input" placeholder="Ask me anything about your code...">
+                        <button class="send-button" title="Send Message (Enter)">
+                            <i class="material-icons">send</i>
+                        </button>
+                    </div>
+                    <div class="ai-input-hints">
+                        <span class="hint">💡 Try: "Help me optimize this function" or "Create a new React component"</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -243,7 +252,7 @@
             </div>
             <div class="terminal-content">
                 <div class="terminal-output">
-                    <div class="terminal-line">Welcome to Coder Terminal v1.0</div>
+                    <div class="terminal-line">Welcome to Coder AI Terminal v2.0</div>
                     <div class="terminal-line">Type 'help' for available commands</div>
                 </div>
                 <div class="terminal-input-container">
@@ -265,6 +274,10 @@
                     <div class="shortcut-item">
                         <span class="shortcut-keys">Ctrl + S</span>
                         <span class="shortcut-desc">Save current file</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-keys">Ctrl + N</span>
+                        <span class="shortcut-desc">New file</span>
                     </div>
                 </div>
                 <div class="shortcut-group">
@@ -297,42 +310,26 @@
                         <span class="shortcut-desc">Split editor</span>
                     </div>
                     <div class="shortcut-item">
-                        <span class="shortcut-keys">Ctrl + K</span>
-                        <span class="shortcut-desc">Show keyboard shortcuts</span>
+                        <span class="shortcut-keys">Ctrl + ,</span>
+                        <span class="shortcut-desc">Open settings</span>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Custom Modal Dialog (hidden by default) -->
-        <div class="modal-backdrop" style="display: none;">
-            <div class="modal-dialog">
-                <div class="modal-header">
-                    <h3 class="modal-title">Dialog Title</h3>
-                    <button class="modal-close">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p class="modal-message">Dialog message goes here.</p>
-                    <input type="text" class="modal-input" style="display: none;">
-                </div>
-                <div class="modal-footer">
-                    <button class="modal-button modal-cancel">Cancel</button>
-                    <button class="modal-button modal-confirm">OK</button>
+                <div class="shortcut-group">
+                    <h4>AI Assistant</h4>
+                    <div class="shortcut-item">
+                        <span class="shortcut-keys">Ctrl + I</span>
+                        <span class="shortcut-desc">Focus AI input</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-keys">Ctrl + Enter</span>
+                        <span class="shortcut-desc">Send AI message</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Load highlight.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <!-- Load specific languages if needed, or use the common pack -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script> -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js"></script> -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/css.min.js"></script> -->
-
-    <!-- Load the main application script as a module -->
+    <!-- Scripts -->
     <script type="module" src="main.js"></script>
-
 </body>
-</html> 
 </html> 
