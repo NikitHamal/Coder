@@ -1,18 +1,78 @@
 // modal.js
 
-const modalBackdrop = document.querySelector('.modal-backdrop');
-const modalDialog = document.querySelector('.modal-dialog');
-const modalTitle = document.querySelector('.modal-title');
-const modalMessage = document.querySelector('.modal-message');
-const modalInput = document.querySelector('.modal-input');
-const modalConfirmBtn = document.querySelector('.modal-confirm');
-const modalCancelBtn = document.querySelector('.modal-cancel');
-const modalCloseBtn = document.querySelector('.modal-close');
-
+// Wait for DOM to be ready before accessing elements
+let modalBackdrop, modalDialog, modalTitle, modalMessage, modalInput, modalConfirmBtn, modalCancelBtn, modalCloseBtn;
 let currentModalResolver = null;
+let modalInitialized = false;
+
+// Initialize modal elements when DOM is ready
+function initializeModalElements() {
+    modalBackdrop = document.querySelector('.modal-backdrop');
+    modalDialog = document.querySelector('.modal-dialog');
+    modalTitle = document.querySelector('.modal-title');
+    modalMessage = document.querySelector('.modal-message');
+    modalInput = document.querySelector('.modal-input');
+    modalConfirmBtn = document.querySelector('.modal-confirm');
+    modalCancelBtn = document.querySelector('.modal-cancel');
+    modalCloseBtn = document.querySelector('.modal-close');
+
+    // Check if all elements exist
+    if (!modalBackdrop || !modalDialog || !modalTitle || !modalMessage || 
+        !modalInput || !modalConfirmBtn || !modalCancelBtn || !modalCloseBtn) {
+        console.warn('Some modal elements not found. Modal functionality may not work properly.');
+        modalInitialized = false;
+        return false;
+    }
+
+    // Add event listeners for modal buttons
+    modalConfirmBtn.addEventListener('click', () => closeModal(true));
+    modalCancelBtn.addEventListener('click', () => closeModal(false));
+    modalCloseBtn.addEventListener('click', () => closeModal(false));
+
+    // Allow Enter key to confirm prompts/alerts, Esc to cancel
+    modalInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            closeModal(true);
+        } else if (e.key === 'Escape') {
+            closeModal(false);
+        }
+    });
+
+    // Allow Enter on buttons, and Escape globally when modal is open
+    modalDialog.addEventListener('keydown', (e) => {
+         if (modalBackdrop.style.display === 'flex') {
+             if (e.key === 'Escape') {
+                 closeModal(false);
+             } else if (e.key === 'Enter' && document.activeElement === modalConfirmBtn) {
+                 closeModal(true);
+             } else if (e.key === 'Enter' && document.activeElement === modalCancelBtn) {
+                 closeModal(false);
+             }
+         }
+    });
+
+    modalInitialized = true;
+    console.log('Modal system initialized successfully');
+    return true;
+}
 
 // Generic function to show the modal
 function showModal(config) {
+    // Ensure elements are initialized
+    if (!modalInitialized || !modalBackdrop || !modalTitle || !modalMessage || !modalInput || 
+        !modalConfirmBtn || !modalCancelBtn) {
+        console.error('Modal elements not initialized. Cannot show modal.');
+        // Try to initialize one more time
+        if (!modalInitialized) {
+            initializeModalElements();
+            if (!modalInitialized) {
+                return Promise.reject(new Error('Modal elements not initialized'));
+            }
+        } else {
+            return Promise.reject(new Error('Modal elements not found'));
+        }
+    }
+
     return new Promise((resolve) => {
         currentModalResolver = resolve; // Store the resolver function
 
@@ -49,10 +109,15 @@ function showModal(config) {
 
 // Close the modal and resolve the promise
 function closeModal(value) {
+    if (!modalBackdrop) {
+        console.error('Modal backdrop not found. Cannot close modal.');
+        return;
+    }
+
     // Remove class toggle
     modalBackdrop.style.display = 'none'; // Hide immediately
     if (currentModalResolver) {
-        if (modalInput.style.display === 'block') {
+        if (modalInput && modalInput.style.display === 'block') {
             // Resolve with input value if it was a prompt
             currentModalResolver(value === false ? null : modalInput.value);
         } else {
@@ -63,33 +128,13 @@ function closeModal(value) {
     }
 }
 
-// Add event listeners for modal buttons
-modalConfirmBtn.addEventListener('click', () => closeModal(true));
-modalCancelBtn.addEventListener('click', () => closeModal(false));
-modalCloseBtn.addEventListener('click', () => closeModal(false));
-
-// Allow Enter key to confirm prompts/alerts, Esc to cancel
-modalInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        closeModal(true);
-    } else if (e.key === 'Escape') {
-        closeModal(false);
-    }
-});
-
-// Allow Enter on buttons, and Escape globally when modal is open
-modalDialog.addEventListener('keydown', (e) => {
-     if (modalBackdrop.style.display === 'flex') {
-         if (e.key === 'Escape') {
-             closeModal(false);
-         } else if (e.key === 'Enter' && document.activeElement === modalConfirmBtn) {
-             closeModal(true);
-         } else if (e.key === 'Enter' && document.activeElement === modalCancelBtn) {
-             closeModal(false);
-         }
-     }
-});
-
+// Initialize modal when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeModalElements);
+} else {
+    // DOM is already ready
+    initializeModalElements();
+}
 
 // Wrapper for prompt using custom modal
 export async function showPrompt(title, message, defaultValue = '', placeholder = '') {
@@ -99,7 +144,8 @@ export async function showPrompt(title, message, defaultValue = '', placeholder 
         showInput: true,
         defaultValue: defaultValue,
         placeholder: placeholder,
-        confirmText: 'OK',        cancelText: 'Cancel'
+        confirmText: 'OK',
+        cancelText: 'Cancel'
     });
 }
 

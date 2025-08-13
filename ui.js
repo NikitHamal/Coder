@@ -32,11 +32,9 @@ const fontSizeSelector = document.getElementById('font-size');
 const tabSizeSelector = document.getElementById('tab-size');
 const aiModeSelectEl = document.getElementById('ai-mode-select');
 const aiModelSelectEl = document.getElementById('ai-model-select');
-const fileTypeStatus = document.querySelector('.file-type');
-const fileSizeStatus = document.querySelector('.file-size');
-const tabSizeStatus = document.querySelector('.tab-size'); // Status bar display
-const lintStatus = document.querySelector('.lint-status');
-const cursorPositionStatus = document.querySelector('.cursor-position');
+
+// Status bar elements - lazy loaded to avoid errors
+let fileTypeStatus, fileSizeStatus, tabSizeStatus, lintStatus, cursorPositionStatus;
 
 // Action Buttons & Panels
 const searchBtn = document.querySelector('.search-btn');
@@ -51,6 +49,27 @@ const closeTerminalBtn = document.querySelector('.close-terminal');
 
 const splitBtn = document.querySelector('.split-btn');
 const editorPanes = document.querySelectorAll('.editor-pane');
+
+// Initialize status bar elements
+function initializeStatusBarElements() {
+    fileTypeStatus = document.querySelector('.file-type');
+    fileSizeStatus = document.querySelector('.file-size');
+    tabSizeStatus = document.querySelector('.tab-size');
+    lintStatus = document.querySelector('.lint-status');
+    cursorPositionStatus = document.querySelector('.cursor-position');
+    
+    if (!fileTypeStatus || !fileSizeStatus || !tabSizeStatus || !lintStatus || !cursorPositionStatus) {
+        console.warn('Some status bar elements not found. Status bar may not work properly.');
+    }
+}
+
+// Wait for DOM to be ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeStatusBarElements);
+} else {
+    // DOM is already ready
+    initializeStatusBarElements();
+}
 
 // --- File Tree ---
 
@@ -351,9 +370,9 @@ export function removeTabUI(filePath) {
 
 export function updateStatusBar(filePath) {
     if (!filePath) {
-        fileTypeStatus.textContent = '-';
-        fileSizeStatus.textContent = '-';
-        cursorPositionStatus.textContent = 'Ln 1, Col 1';
+        if (fileTypeStatus) fileTypeStatus.textContent = '-';
+        if (fileSizeStatus) fileSizeStatus.textContent = '-';
+        if (cursorPositionStatus) cursorPositionStatus.textContent = 'Ln 1, Col 1';
         // Keep tab size and lint status potentially? Or clear them too.
         // tabSizeStatus.textContent = `Spaces: ${localStorage.getItem('coder_tab_size') || '4'}`;
         // lintStatus.textContent = '0 Problems';
@@ -362,43 +381,54 @@ export function updateStatusBar(filePath) {
     const fileName = filePath.split('/').pop();
 
     // File Type
-    if (fileName.endsWith('.html')) fileTypeStatus.textContent = 'HTML';
-    else if (fileName.endsWith('.css')) fileTypeStatus.textContent = 'CSS';
-    else if (fileName.endsWith('.js')) fileTypeStatus.textContent = 'JavaScript';
-    else if (fileName.endsWith('.json')) fileTypeStatus.textContent = 'JSON';
-    else if (fileName.endsWith('.md')) fileTypeStatus.textContent = 'Markdown';
-    else fileTypeStatus.textContent = 'Text'; // More generic default
+    if (fileName.endsWith('.html')) {
+        if (fileTypeStatus) fileTypeStatus.textContent = 'HTML';
+    } else if (fileName.endsWith('.css')) {
+        if (fileTypeStatus) fileTypeStatus.textContent = 'CSS';
+    } else if (fileName.endsWith('.js')) {
+        if (fileTypeStatus) fileTypeStatus.textContent = 'JavaScript';
+    } else if (fileName.endsWith('.json')) {
+        if (fileTypeStatus) fileTypeStatus.textContent = 'JSON';
+    } else if (fileName.endsWith('.md')) {
+        if (fileTypeStatus) fileTypeStatus.textContent = 'Markdown';
+    } else {
+        if (fileTypeStatus) fileTypeStatus.textContent = 'Text'; // More generic default
+    }
 
     // File Size
     const content = fileStorage.getFile(filePath) || '';
     const sizeInBytes = new Blob([content]).size;
-    if (sizeInBytes < 1024) fileSizeStatus.textContent = `${sizeInBytes} B`;
-    else if (sizeInBytes < 1024 * 1024) fileSizeStatus.textContent = `${(sizeInBytes / 1024).toFixed(1)} KB`;
-    else fileSizeStatus.textContent = `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`;
+    if (sizeInBytes < 1024) {
+        if (fileSizeStatus) fileSizeStatus.textContent = `${sizeInBytes} B`;
+    } else if (sizeInBytes < 1024 * 1024) {
+        if (fileSizeStatus) fileSizeStatus.textContent = `${(sizeInBytes / 1024).toFixed(1)} KB`;
+    } else {
+        if (fileSizeStatus) fileSizeStatus.textContent = `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
 
     // Tab Size (reflects current setting)
     const savedTabSize = localStorage.getItem('coder_tab_size') || '4';
-    tabSizeStatus.textContent = `Spaces: ${savedTabSize}`;
+    if (tabSizeStatus) tabSizeStatus.textContent = `Spaces: ${savedTabSize}`;
 
     // Lint Status (Simulated)
-    lintStatus.textContent = '0 Problems';
+    if (lintStatus) lintStatus.textContent = '0 Problems';
 
     // Cursor position update is handled by editor.js listening to clicks/keys
 }
 
 // Update cursor position display only
 export function updateCursorPositionUI(line, col) {
-     cursorPositionStatus.textContent = `Ln ${line}, Col ${col}`;
+     if (cursorPositionStatus) cursorPositionStatus.textContent = `Ln ${line}, Col ${col}`;
 }
 
 export function updateLintStatus(problems) {
     if (!Array.isArray(problems) || problems.length === 0) {
-        lintStatus.textContent = '0 Problems';
-        lintStatus.title = '';
+        if (lintStatus) lintStatus.textContent = '0 Problems';
+        if (lintStatus) lintStatus.title = '';
         return;
     }
-    lintStatus.textContent = `${problems.length} Problem${problems.length > 1 ? 's' : ''}`;
-    lintStatus.title = problems.map(p => `Line ${p.line}: ${p.type} - ${p.message}`).join('\n');
+    if (lintStatus) lintStatus.textContent = `${problems.length} Problem${problems.length > 1 ? 's' : ''}`;
+    if (lintStatus) lintStatus.title = problems.map(p => `Line ${p.line}: ${p.type} - ${p.message}`).join('\n');
 }
 
 // --- Initial UI Setup ---
@@ -461,15 +491,13 @@ export function setupSettingsPanelUI() {
 
     fontSizeSelector.addEventListener('change', () => {
         const selectedSize = fontSizeSelector.value;
-        localStorage.setItem('coder_font_size', selectedSize);
-        document.querySelectorAll('.editor pre code, .editor pre, .line-numbers').forEach(el => { // Apply to pre too for line-height consistency
+        document.querySelectorAll('.editor pre code, .line-numbers').forEach(el => { // Apply to pre too for line-height consistency
              el.style.fontSize = `${selectedSize}px`;
         });
     });
 
     tabSizeSelector.addEventListener('change', () => {
         const selectedSize = tabSizeSelector.value;
-        localStorage.setItem('coder_tab_size', selectedSize);
         // Update status bar display if a file is open
         const activeTab = document.querySelector('.tab.active');
         if (activeTab) {
